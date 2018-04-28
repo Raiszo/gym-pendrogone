@@ -1,0 +1,5 @@
+gym
+tensorflow
+scipy
+keras
+jupyter
