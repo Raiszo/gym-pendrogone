@@ -21,7 +21,7 @@ class Drone2dEnv(gym.Env):
         self.maxF = 2 * self.mass * self.gravity
         self.minF = 0
         self.maxAngle = 90 * math.pi / 180
-        self.dt = 0.01
+        self.dt = 0.02
         
         high = np.array([
             np.finfo(np.float32).max,
@@ -84,46 +84,55 @@ class Drone2dEnv(gym.Env):
         return self.state
     
     def render(self, mode='human', close=False):
+        from gym.envs.classic_control import rendering
         screen_width = 600
         screen_height = 400
 
-        arm_length = 10
-        arm_width = 2
-        propeller_rad = 3
+        arm_length = 300
+        arm_width = 50
+        propeller_rad = 20
         world_width = 2
         scale = 1
 
         x,z,phi = self.state[0:3].tolist()
 
         if self.viewer is None:
-            from gym.envs.classic_control import rendering
             self.viewer = rendering.Viewer(screen_width, screen_height)
-            self.viewer.set_bounds()
+            self.viewer.set_bounds(-2.2,2.2,-2.2,2.2)
+            
+            l,r,t,b = -arm_length, arm_length, arm_width, -arm_width
+            frame = rendering.FilledPolygon([(l,b), (l,t), (r,t), (r,b)])
+            self.frametrans = rendering.Transform(rotation=phi, translation=(x,z))
 
 
-
-        l,r,t,b = -arm_length, arm_length, arm_width, -arm_width
+        
         frame = rendering.FilledPolygon([(l,b), (l,t), (r,t), (r,b)])
-        frame.set_color(0, .8, .8)
-        self.frame_trans = rendering.Transform(rotation=phi, translation=(x,z))
-        frame.add_attr(self.frame_trans)
-
-
         self.viewer.add_geom(frame)
+        return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
+    """
+        l,r,t,b = -arm_length, arm_length, arm_width, -arm_width
+        frame_trans = rendering.Transform(rotation=phi, translation=(x,z))
+        frame = self.viewer.draw_polygon([(l,b), (l,t), (r,t), (r,b)])
+        frame.set_color(0, .8, .8)
+        frame.add_attr(frame_trans)
+
+
+        # self.viewer.add_geom(frame)
+
+        rj = rendering.Transform(translation=(x+math.cos(phi)*arm_length, z+math.sin(phi)*arm_length))
         r_propeller = self.viewer.draw_circle(.1)
         r_propeller.set_color(.8, .8, 0)
-        rj = rendering.Transform(translation=(x+cos(phi)*arm_length, z+sin(phi)*amr_length))
         r_propeller.add_attr(rj)
-        self.viewer.add_geom(r_propeller)
+        # self.viewer.add_geom(r_propeller)
 
+        lj = rendering.Transform(translation=(x-math.cos(phi)*arm_length, z-math.sin(phi)*arm_length))
         l_propeller = self.viewer.draw_circle(.1)
         l_propeller.set_color(.8, .8, 0)
-        lj = rendering.Transform(translation=(x-cos(phi)*arm_length, z-sin(phi)*amr_length))
         l_propeller.add_attr(lj)
-        self.viewer.add_geom(l_propeller)
-
-        return self.viewer.render(return_rgb_array = mode=='rgb_array')
+        # self.viewer.add_geom(l_propeller)
+    """
+        
 
     def close(self):
         if self.viewer: self.viewer.close()
