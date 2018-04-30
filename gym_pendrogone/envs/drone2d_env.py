@@ -48,7 +48,7 @@ class Drone2dEnv(gym.Env):
         return [seed]
         
     def step(self, action):
-        assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
+        # assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
         state = self.state
         x, z, phi, xdot, zdot, phidot = state
         
@@ -65,15 +65,16 @@ class Drone2dEnv(gym.Env):
             M / self.Ixx
         ])
 
-        self.state = sdot * self.dt + np.array(self.state)
+        neu_state = sdot * self.dt + np.array(self.state)
+        self.state = neu_state
 
-        done = neu_state[2] < -self.maxAngle \
-               or neu_state[2] > self.maxAngle
+        done = self.state[2] < -self.maxAngle \
+               or self.state[2] > self.maxAngle
 
         done = bool(done)
 
-        reward_x = (state[0] - state[1]) / self.dt
-        reward_z = - state[1] ** 2
+        reward_x = (neu_state[0] - state[0]) / self.dt
+        reward_z = - neu_state[1] ** 2
         reward = reward_x + reward_z
         
         return self.state, reward, done, {}
