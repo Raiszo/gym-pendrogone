@@ -6,4 +6,5 @@ keras
 theano
 ipython
 jupyter
+pyglet
 git+https://github.com/jakevdp/JSAnimation.git
