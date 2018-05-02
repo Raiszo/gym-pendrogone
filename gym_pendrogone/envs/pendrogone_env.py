@@ -4,7 +4,7 @@ import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
 
-class Drone2dEnv(gym.Env):
+class Pendrogone(gym.Env):
     metadata = {
         'render.modes': ['human'],
         'video.frames_per_second' : 50
