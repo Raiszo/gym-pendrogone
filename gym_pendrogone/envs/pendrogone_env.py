@@ -12,24 +12,44 @@ class Pendrogone(gym.Env):
 
     def __init__(self):
         self.gravity = 9.81 #: [m/s2] acceleration
-        self.mass = 0.5 #: [kg] mass
-        self.Ixx = 0.00025
+
+        ## Quadrotor stuff
+        self.qmass = 0.5 #: [kg] mass
+        self.Ixx = 0.003
         self.arm_length = 0.086 # [m]
         self.arm_width = 0.02 # [m]
         self.height = 0.02 # [m]
+        # limits
+        self.q_maxAngle = 90 * math.pi / 180
 
+        ## Load stuff
+        self.lmass = 0.05
+        self.cable_length = 0.7
+        self.cable_width = 0.005
+        self.l_maxAngle = 75 * math.pi / 180
+
+        self.Mass = self.qmass + self.lmass
         # max and min force for each motor
-        self.maxF = 2 * self.mass * self.gravity
+        self.maxF = 2 * self.Mass * self.gravity
         self.minF = 0
-        self.maxAngle = 90 * math.pi / 180
         self.dt = 0.02
+
+        """
+        The state has 8 dimensions:
+         xm,zm :quadrotor position
+         phi :quadrotor angle
+         theta :load angle, for now the tension in the cable 
+                is always non zero
+        """
         
         high = np.array([
             np.finfo(np.float32).max,
             np.finfo(np.float32).max,
-            self.maxAngle * 2,
+            self.q_maxAngle,
+            self.l_maxAngle,
             np.finfo(np.float32).max,
             np.finfo(np.float32).max,
+            np.finfo(np.float32).max
             np.finfo(np.float32).max
         ])
         
@@ -38,7 +58,11 @@ class Pendrogone(gym.Env):
             high = np.array([self.maxF, self.maxF]),
             dtype = np.float32
         )
-        self.observation_space = spaces.Box(-high, high, dtype=np.float32)
+        self.observation_space = spaces.Box(
+            low = -high,
+            high = high,
+            dtype=np.float32
+        )
 
         self.seed()
         self.viewer = None
@@ -47,11 +71,11 @@ class Pendrogone(gym.Env):
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
-        
+    
     def step(self, action):
         # assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
         state = self.state
-        x, z, phi, xdot, zdot, phidot = state
+        x, z, phi, theta, xdot, zdot, phidot, thetadot = state
         
         u1, u2 = action
         F = u1 + u2
@@ -61,27 +85,32 @@ class Pendrogone(gym.Env):
             xdot,
             zdot,
             phidot,
-            -F * math.sin(phi) / self.mass,
-            F * math.cos(phi) / self.mass - self.gravity,
-            M / self.Ixx
+            thetadot,
+            (-F*np.cos(phi - theta) - self.qmass*self.cable_length*theta*2) * np.sin(theta) / self.Mass,
+            (-F*np.cos(phi - theta) - self.qmass*self.cable_length*theta*2) * np.sin(theta) / self.Mass - self.gravity,
+            M / self.Ixx,
+            np.sin(phi - theta) / (self.qmass * self.cable_length)
         ])
 
         neu_state = sdot * self.dt + np.array(self.state)
         self.state = neu_state
 
-        done = self.state[2] < -self.maxAngle \
-               or self.state[2] > self.maxAngle
+        done = self.state[2] < -self.q_maxAngle \
+               or self.state[2] > self.q_maxAngle \
+               or self.state[3] < -self.l_maxAngle \
+               or self.state[3] > self.l_maxAngle
 
         done = bool(done)
 
-        reward_x = (neu_state[0] - state[0]) / self.dt
-        reward_z = - neu_state[1] ** 2
-        reward = reward_x + reward_z
+        reward_x = -(self.state[0] - self.objective[0])**2
+        reward_z = -(self.state[1] - self.objective[1])**2
+        reward_angles = -10 * self.state[2] - 20*self.state[3]
+        reward = reward_x + reward_z + reward_angles
         
         return self.state, reward, done, {}
         
     def reset(self):
-        self.state = np.zeros(6)
+        lposs = np.random()
         return self.state
     
     def render(self, mode='human', close=False):
