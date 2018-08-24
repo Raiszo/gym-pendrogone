@@ -5,7 +5,7 @@ from gym import error, spaces, utils
 from gym.utils import seeding
 
 # width height
-LIMITS = np.array([1., 1.])
+LIMITS = np.array([1.5, 1.5])
 
 class Pendrogone(gym.Env):
     metadata = {
@@ -28,7 +28,7 @@ class Pendrogone(gym.Env):
         ## Load stuff
         self.lmass = 0.05
         self.cable_length = 0.7
-        self.cable_width = 0.005
+        self.cable_width = 0.01
         self.l_maxAngle = 75 * math.pi / 180
 
         self.Mass = self.qmass + self.lmass
@@ -52,7 +52,7 @@ class Pendrogone(gym.Env):
             self.l_maxAngle,
             np.finfo(np.float32).max,
             np.finfo(np.float32).max,
-            np.finfo(np.float32).max
+            np.finfo(np.float32).max,
             np.finfo(np.float32).max
         ])
         
@@ -77,14 +77,13 @@ class Pendrogone(gym.Env):
     
     @staticmethod
     def transform(x0, angle, xb):
-        T = np.array([ [np.cos(angle), -np.sin(angle)]
+        T = np.array([ [np.cos(angle), -np.sin(angle)],
                        [np.sin(angle),  np.cos(angle)] ])
         return x0 + T.dot(xb)
 
     def step(self, action):
         # assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
-        state = self.state
-        x, z, phi, theta, xdot, zdot, phidot, thetadot = state
+        x, z, phi, theta, xdot, zdot, phidot, thetadot = self.state
         
         u1, u2 = action
         F = u1 + u2
@@ -101,8 +100,9 @@ class Pendrogone(gym.Env):
             np.sin(phi - theta) / (self.qmass * self.cable_length)
         ])
 
-        neu_state = sdot * self.dt + np.array(self.state)
+        neu_state = sdot * self.dt + self.state
         self.state = neu_state
+        print(self.state)
 
         done = self.state[2] < -self.q_maxAngle \
                or self.state[2] > self.q_maxAngle \
@@ -112,12 +112,12 @@ class Pendrogone(gym.Env):
         done = bool(done)
 
         load_pos = Pendrogone.transform(self.state[0:2],
-                                        self.state[2],
+                                        self.state[3],
                                         np.array([0, -self.cable_length]))
         
         reward_x = -(load_pos[0] - self.objective[0])**2
         reward_z = -(load_pos[1] - self.objective[1])**2
-        reward_dot = - 5*(load_pos[4])**2 - 5*(load_pos[5])**2 
+        reward_dot = np.array([1., 1., 10., 20.]) * np.power(self.state[4:], 2)
         reward_angles = - 10*self.state[2] - 20*self.state[3]
         reward = reward_x + reward_z + reward_dot + reward_angles
         
@@ -152,16 +152,16 @@ class Pendrogone(gym.Env):
     
     def render(self, mode='human', close=False):
         from gym.envs.classic_control import rendering
-        screen_width = 500
-        screen_height = 500
+        screen_width = 800
+        screen_height = 800
 
         x,z,phi,theta = self.state[0:4].tolist()
 
         t1_xy = Pendrogone.transform(self.state[0:2],
-                                     self.state[2]
+                                     self.state[2],
                                      np.array([self.arm_length, 0]))
         t2_xy = Pendrogone.transform(self.state[0:2],
-                                     self.state[2]
+                                     self.state[2],
                                      np.array([-self.arm_length, 0]))
         tl_xy = Pendrogone.transform(self.state[0:2],
                                      self.state[3],
@@ -179,10 +179,10 @@ class Pendrogone(gym.Env):
             frame.add_attr(self.frame_trans)
             self.viewer.add_geom(frame)
 
-            ll,lr,lt,lb = -self.cable_length, self.cable_length, self.cable_width, -self.cable_width
+            ll,lr,lt,lb = -self.cable_width, self.cable_width, 0, -self.cable_length
             self.cable_trans = rendering.Transform(rotation=theta, translation=(x,z))
             cable = rendering.FilledPolygon([(ll,lb), (ll,lt), (lr,lt), (lr,lb)])
-            cable.set_color(5., 5., 5.)
+            cable.set_color(.1, .1, .1)
             cable.add_attr(self.cable_trans)
             self.viewer.add_geom(cable)
             
@@ -199,19 +199,21 @@ class Pendrogone(gym.Env):
             self.viewer.add_geom(thruster2)
 
             self.tl_trans = rendering.Transform(translation=tl_xy)
-            load = self.viewer.draw_circle(.1)
-            load.set_color(.8, 0, .8)
+            load = self.viewer.draw_circle(.08)
+            load.set_color(.8, .3, .8)
             load.add_attr(self.tl_trans)
             self.viewer.add_geom(load)
             
         self.frame_trans.set_translation(x,z)
         self.frame_trans.set_rotation(phi)
+        self.cable_trans.set_translation(x,z)
+        self.cable_trans.set_rotation(theta)
         
         self.t1_trans.set_translation(t1_xy[0], t1_xy[1])
         self.t2_trans.set_translation(t2_xy[0], t2_xy[1])
         self.tl_trans.set_translation(tl_xy[0], tl_xy[1])
         
-        return self.viewer.render(return_rgb_array = mode=='rgb_array')        
+        return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
     def close(self):
         if self.viewer: self.viewer.close()
