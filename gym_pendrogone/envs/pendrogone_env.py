@@ -102,7 +102,6 @@ class Pendrogone(gym.Env):
 
         neu_state = sdot * self.dt + self.state
         self.state = neu_state
-        print(self.state)
 
         done = self.state[2] < -self.q_maxAngle \
                or self.state[2] > self.q_maxAngle \
