@@ -4,14 +4,16 @@ import gym_pendrogone
 import numpy as np
 import matplotlib.pyplot as plt
 
-env = gym.make('Pendrogone-v0')
-action = 0.55 * 9.81 / 2
+# action = 0.55 * 9.81 / 2
 
-a = (action, action)
+env = gym.make('Pendrogone-v0')
 
 obs = env.reset()
-
 for _ in range(200):
-    obs, r, done, _ = env.step(a)
-    # print(obs)
     env.render(mode = 'rgb_array')
+    a = env.action_space.sample()
+    obs, r, done, _ = env.step(a)
+    if done:
+        print('me rompi D;')
+        break
+    # print(obs)

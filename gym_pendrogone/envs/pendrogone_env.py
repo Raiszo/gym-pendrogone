@@ -6,11 +6,12 @@ from gym.utils import seeding
 
 # width height
 LIMITS = np.array([1.5, 1.5])
+T = 0.02
 
 class Pendrogone(gym.Env):
     metadata = {
         'render.modes': ['human'],
-        'video.frames_per_second' : 50
+        'video.frames_per_second' : 1/T
     }
 
     def __init__(self):
@@ -35,7 +36,7 @@ class Pendrogone(gym.Env):
         # max and min force for each motor
         self.maxF = 2 * self.Mass * self.gravity
         self.minF = 0
-        self.dt = 0.02
+        self.dt = T
 
         """
         The state has 8 dimensions:
