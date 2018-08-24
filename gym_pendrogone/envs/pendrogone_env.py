@@ -166,6 +166,8 @@ class Pendrogone(gym.Env):
                                      self.state[3],
                                      np.array([0, -self.cable_length]))
 
+        to_xy = self.objective
+
         if self.viewer is None:
             self.viewer = rendering.Viewer(screen_width, screen_height)
             self.viewer.set_bounds(-LIMITS[0], LIMITS[0],
@@ -202,6 +204,13 @@ class Pendrogone(gym.Env):
             load.set_color(.8, .3, .8)
             load.add_attr(self.tl_trans)
             self.viewer.add_geom(load)
+
+            self.to_trans = rendering.Transform(translation=to_xy)
+            objective = self.viewer.draw_circle(.02)
+            objective.set_color(1., .01, .01)
+            objective.add_attr(self.to_trans)
+            self.viewer.add_geom(objective)
+
             
         self.frame_trans.set_translation(x,z)
         self.frame_trans.set_rotation(phi)
@@ -211,6 +220,8 @@ class Pendrogone(gym.Env):
         self.t1_trans.set_translation(t1_xy[0], t1_xy[1])
         self.t2_trans.set_translation(t2_xy[0], t2_xy[1])
         self.tl_trans.set_translation(tl_xy[0], tl_xy[1])
+
+        self.to_trans.set_translation(to_xy[0], to_xy[1])
         
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
