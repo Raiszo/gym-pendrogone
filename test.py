@@ -8,12 +8,13 @@ import matplotlib.pyplot as plt
 
 env = gym.make('Pendrogone-v0')
 
-obs = env.reset()
-for _ in range(200):
-    env.render(mode = 'rgb_array')
-    a = env.action_space.sample()
-    obs, r, done, _ = env.step(a)
-    if done:
-        print('me rompi D;')
-        break
-    # print(obs)
+for _ in range(10):
+    obs = env.reset()
+    for _ in range(200):
+        env.render(mode = 'rgb_array')
+        a = env.action_space.sample()
+        obs, r, done, _ = env.step(a)
+        if done:
+            print('me rompi D;')
+            break
+        # print(obs)
