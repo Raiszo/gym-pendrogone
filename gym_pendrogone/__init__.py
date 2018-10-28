@@ -7,7 +7,7 @@ register(
 )
 
 register(
-    id='Pendrogone-v0',
-    entry_point='gym_pendrogone.envs:Pendrogone',
+    id='PendrogoneZero-v0',
+    entry_point='gym_pendrogone.envs:Pendrogone_zero',
 )
 
