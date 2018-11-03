@@ -9,5 +9,6 @@ register(
 register(
     id='PendrogoneZero-v0',
     entry_point='gym_pendrogone.envs:Pendrogone_zero',
+    timestep_limit=200
 )
 

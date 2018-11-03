@@ -46,8 +46,8 @@ class Pendrogone_zero(Pendrogone):
                or self.state[3] < -self.l_maxAngle \
                or self.state[3] > self.l_maxAngle
 
-        done = bool(done)
-        # done = False
+        # done = bool(done)
+        done = False
 
         load_target_dist = np.linalg.norm([ load_pos[0] - self.objective[0],
                                             load_pos[1] - self.objective[1] ])
