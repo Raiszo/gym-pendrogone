@@ -24,9 +24,10 @@ class Pendrogone_zero(Pendrogone):
         load_target_theta = np.arctan2( load_pos[0] - self.objective[0],
                                         load_pos[1] - self.objective[1] )
 
-        angle_2_target = load_target_theta - th
-        
+        angle_2_target = load_target_theta - phi
+
         return np.array([
+            z,
             np.sin(angle_2_target), np.cos(angle_2_target),
             xdot, zdot,
             thdot, phidot,
@@ -34,13 +35,20 @@ class Pendrogone_zero(Pendrogone):
             np.sin(phi), np.cos(phi),
         ], dtype=np.float32)
 
-    def alive_bonus():
-        alive = self.state[2] < -self.q_maxAngle \
-            or self.state[2] > self.q_maxAngle \
-            or self.state[3] < -self.l_maxAngle \
-            or self.state[3] > self.l_maxAngle
+    def alive_bonus(self):
+        # dead = self.state[2] < -self.q_maxAngle \
+        #     or self.state[2] > self.q_maxAngle \
+        #     or self.state[3] < -self.l_maxAngle \
+        #     or self.state[3] > self.l_maxAngle \
+        #     or self.state[1] < -(LIMITS[1]+0.5)
+        dead = self.state[1] < -(LIMITS[1]+0.5)
 
-        return +2 if alive else -1
+        return +20 if not dead else -100
+
+    def calc_potential(self, load_pos):
+        dist = np.linalg.norm([ load_pos[0] - self.objective[0],
+                                load_pos[1] - self.objective[1] ])
+        return - dist / T
 
     def step(self, action):
         self._apply_action(action)
@@ -50,19 +58,26 @@ class Pendrogone_zero(Pendrogone):
 
         alive = float(self.alive_bonus())
         done = alive < 0
-
-        load_target_dist = np.linalg.norm([ load_pos[0] - self.objective[0],
-                                            load_pos[1] - self.objective[1] ])
+        # done = False
         
-        load_target_cost = -2.0 * load_target_dist
-        control_cost = -0.01 * np.ones_like(action).dot(action**2)
-        dot_cost = - np.array([0.1, 0.1, 1, 1]).dot(self.state[4:]**2)
+        old_potential = self.potential
+        self.potential = self.calc_potential(load_pos)
+        progress = float(self.potential - old_potential)
+
+        control_cost = -0.01 * np.sum(action**2)
+        stability = 1 - (-self.potential/0.5)**0.4
+        # dot_cost = - np.array([0.01, 0.01, 0.01, 0.01]).dot(self.state[4:]**2)
 
         rewards = [
-            load_target_dist,
-            control_cost,
-            dot_cost
+            # progress,
+            # control_cost,
+            # dot_cost,
+            # stability,
+            # alive
+            -self.state[1]**2
         ]
+        # print(obs)
+        # print(rewards)
         
         return obs, sum(rewards), done, {}
 
@@ -98,10 +113,13 @@ class Pendrogone_zero(Pendrogone):
         mean = np.mean(limit)
         
         q_abs = 2*limit * np.random.rand(2) - mean
-        phi = np.random.rand(1) * 2*self.q_maxAngle - self.q_maxAngle
-        theta = np.random.rand(1) * 2*self.l_maxAngle - self.l_maxAngle
+        # phi = np.random.rand(1) * 2*self.q_maxAngle - self.q_maxAngle
+        # theta = np.random.rand(1) * 2*self.l_maxAngle - self.l_maxAngle
+        phi = 0.0
+        theta = 0.0
         
-        l_rel = np.array([0. -self.cable_length])
+        l_rel = np.array([0.0, -self.cable_length])
+        # print(l_rel)
         l_abs = Pendrogone.transform(q_abs, theta, l_rel)
 
         state = np.array([
@@ -112,9 +130,10 @@ class Pendrogone_zero(Pendrogone):
         ])
         self.state = np.concatenate((state, np.zeros(4)))
         self.objective = np.array([0.0, 0.0])
-
         
         load_pos = self._get_load_pos()
+        self.potential = self.calc_potential(load_pos)
+
         return self._get_obs(load_pos)
 
     

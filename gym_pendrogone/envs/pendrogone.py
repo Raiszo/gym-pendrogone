@@ -1,4 +1,3 @@
-import math
 import numpy as np
 import gym
 from gym import error, spaces, utils
@@ -19,18 +18,18 @@ class Pendrogone(gym.Env):
 
         ## Quadrotor stuff
         self.qmass = 0.5 #: [kg] mass
-        self.Ixx = 0.003
-        self.arm_length = 0.086 # [m]
+        self.Ixx = 0.00232
+        self.arm_length = 0.1 # [m]
         self.arm_width = 0.02 # [m]
         self.height = 0.02 # [m]
         # limits
-        self.q_maxAngle = 90 * math.pi / 180
+        self.q_maxAngle = 90 * np.pi / 180
 
         ## Load stuff
-        self.lmass = 0.05
-        self.cable_length = 0.7
+        self.lmass = 0.09
+        self.cable_length = 0.3
         self.cable_width = 0.01
-        self.l_maxAngle = 75 * math.pi / 180
+        self.l_maxAngle = 75 * np.pi / 180
 
         self.Mass = self.qmass + self.lmass
         # max and min force for each motor
@@ -47,6 +46,7 @@ class Pendrogone(gym.Env):
         """
         
         high = np.array([
+            np.finfo(np.float32).max,
             1.0,
             1.0,
             1.0,
