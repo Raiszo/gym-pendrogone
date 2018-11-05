@@ -27,27 +27,29 @@ class Pendrogone_zero(Pendrogone):
         angle_2_target = load_target_theta - th
         
         return np.array([
-            np.sin(th), np.cos(th),
-            np.sin(phi), np.cos(phi),
             np.sin(angle_2_target), np.cos(angle_2_target),
             xdot, zdot,
-            thdot,
-            phidot,
+            thdot, phidot,
+            np.sin(th), np.cos(th),
+            np.sin(phi), np.cos(phi),
         ], dtype=np.float32)
+
+    def alive_bonus():
+        alive = self.state[2] < -self.q_maxAngle \
+            or self.state[2] > self.q_maxAngle \
+            or self.state[3] < -self.l_maxAngle \
+            or self.state[3] > self.l_maxAngle
+
+        return +2 if alive else -1
 
     def step(self, action):
         self._apply_action(action)
 
         load_pos = self._get_load_pos()
         obs = self._get_obs(load_pos)
-        
-        done = self.state[2] < -self.q_maxAngle \
-               or self.state[2] > self.q_maxAngle \
-               or self.state[3] < -self.l_maxAngle \
-               or self.state[3] > self.l_maxAngle
 
-        # done = bool(done)
-        done = False
+        alive = float(self.alive_bonus())
+        done = alive < 0
 
         load_target_dist = np.linalg.norm([ load_pos[0] - self.objective[0],
                                             load_pos[1] - self.objective[1] ])
