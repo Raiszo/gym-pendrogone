@@ -15,17 +15,16 @@ class Drone(gym.Env):
     def __init__(self):
         self.gravity = 9.81 #: [m/s2] acceleration
         self.mass = 0.5 #: [kg] mass
-        self.Ixx = 0.00025
-        self.arm_length = 0.086 # [m]
+        self.Ixx = 0.00232
+        self.arm_length = 0.1 # [m]
         self.arm_width = 0.02 # [m]
         self.height = 0.02 # [m]
 
         # max and min force for each motor
         self.maxF = 2 * self.mass * self.gravity
         self.minF = 0
-        self.maxAngle = 90 * math.pi / 180
-        self.dt = 0.02
-        
+        self.max_angle = np.pi / 2
+                
         high = np.array([
             np.finfo(np.float32).max,
             np.finfo(np.float32).max,
@@ -40,7 +39,11 @@ class Drone(gym.Env):
             high = np.array([self.maxF, self.maxF]),
             dtype = np.float32
         )
-        self.observation_space = spaces.Box(-high, high, dtype=np.float32)
+        self.observation_space = spaces.Box(
+            -high,
+            high,
+            dtype=np.float32
+        )
 
         self.seed()
         self.viewer = None
@@ -50,27 +53,32 @@ class Drone(gym.Env):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
         
+    @staticmethod
+    def transform(x0, angle, xb):
+        T = np.array([ [np.cos(angle), -np.sin(angle)],
+                       [np.sin(angle),  np.cos(angle)] ])
+        return x0 + T.dot(xb)
+
     def render(self, mode='human', close=False):
         from gym.envs.classic_control import rendering
-        screen_width = 500
-        screen_height = 500
+        screen_width = 800
+        screen_height = 800
 
-        x,z,phi = self.state[0:3].tolist()
+        x, z, phi = self.state[0:3].tolist()
 
-        T = np.array([[np.cos(phi), -np.sin(phi), x],
-                      [np.sin(phi), np.cos(phi), z],
-                      [0, 0, 1]])
 
-        bodyFrame = np.array([[self.arm_length, 0 , 1],
-                              [-self.arm_length, 0 , 1]])
+        t1_xy = Pendrogone.transform(self.state[0:2],
+                                     self.state[2],
+                                     np.array([self.arm_length, 0]))
+        t2_xy = Pendrogone.transform(self.state[0:2],
+                                     self.state[2],
+                                     np.array([-self.arm_length, 0]))
 
-        worldFrame = T.dot(bodyFrame.T)[:-1,:]
-        t1_xy = worldFrame[:,0].tolist()
-        t2_xy = worldFrame[:,1].tolist()
         
         if self.viewer is None:
             self.viewer = rendering.Viewer(screen_width, screen_height)
-            self.viewer.set_bounds(-1,1,-1,1)
+            self.viewer.set_bounds(-LIMITS[0], LIMITS[0],
+                                   -LIMITS[1], LIMITS[1])
             
             l,r,t,b = -self.arm_length, self.arm_length, self.arm_width, -self.arm_width
             self.frame_trans = rendering.Transform(rotation=phi, translation=(x,z))
