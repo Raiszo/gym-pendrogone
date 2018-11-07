@@ -3,10 +3,11 @@ import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
 
-LIMITS = np.array([1.5, 1.5])
-T = 0.02
 
 class Drone(gym.Env):
+    LIMITS = np.array([1.5, 1.5])
+    T = 0.02
+    
     metadata = {
         'render.modes': ['human'],
         'video.frames_per_second' : 50
