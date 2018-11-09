@@ -24,15 +24,18 @@ class Drone(gym.Env):
         # max and min force for each motor
         self.maxF = 2 * self.mass * self.gravity
         self.minF = 0
-        self.max_angle = np.pi / 2
-                
+        self.maxAngle = np.pi / 2
+        self.dt = Drone.T
+
         high = np.array([
+            1.0,
+            1.0,
             np.finfo(np.float32).max,
             np.finfo(np.float32).max,
-            self.maxAngle * 2,
+            # 1.0,
             np.finfo(np.float32).max,
             np.finfo(np.float32).max,
-            np.finfo(np.float32).max
+            np.finfo(np.float32).max,
         ])
         
         self.action_space = spaces.Box(
@@ -68,18 +71,19 @@ class Drone(gym.Env):
         x, z, phi = self.state[0:3].tolist()
 
 
-        t1_xy = Pendrogone.transform(self.state[0:2],
+        t1_xy = Drone.transform(self.state[0:2],
                                      self.state[2],
                                      np.array([self.arm_length, 0]))
-        t2_xy = Pendrogone.transform(self.state[0:2],
+        t2_xy = Drone.transform(self.state[0:2],
                                      self.state[2],
                                      np.array([-self.arm_length, 0]))
 
+        to_xy = self.objective
         
         if self.viewer is None:
             self.viewer = rendering.Viewer(screen_width, screen_height)
-            self.viewer.set_bounds(-LIMITS[0], LIMITS[0],
-                                   -LIMITS[1], LIMITS[1])
+            self.viewer.set_bounds(-Drone.LIMITS[0], Drone.LIMITS[0],
+                                   -Drone.LIMITS[1], Drone.LIMITS[1])
             
             l,r,t,b = -self.arm_length, self.arm_length, self.arm_width, -self.arm_width
             self.frame_trans = rendering.Transform(rotation=phi, translation=(x,z))
@@ -99,6 +103,12 @@ class Drone(gym.Env):
             thruster2.set_color(.8, .8, 0)
             thruster2.add_attr(self.t2_trans)
             self.viewer.add_geom(thruster2)
+
+            self.to_trans = rendering.Transform(translation=to_xy)
+            objective = self.viewer.draw_circle(.02)
+            objective.set_color(1., .01, .01)
+            objective.add_attr(self.to_trans)
+            self.viewer.add_geom(objective)
 
         self.frame_trans.set_translation(x,z)
         self.frame_trans.set_rotation(phi)
