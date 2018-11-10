@@ -26,7 +26,7 @@ class Drone_zero(Drone):
             or np.absolute(self.state[0]) > Drone.LIMITS[0] \
             or np.absolute(self.state[1]) > Drone.LIMITS[1]
             
-        return +2 if not dead else -10
+        return +1 if not dead else -20
         
     def step(self, action):
         self._apply_action(action)
@@ -35,7 +35,8 @@ class Drone_zero(Drone):
         alive = float(self.alive_bonus())
         done = alive < 0
 
-        reward = np.array([4e-2, 4e-2, 5e-3, 5e-3, 3e-3]).dot(np.absolute(obs[2::]))
+        reward = -np.array([1e-1, 1e-1, 5e-3, 5e-3, 5e-2]).dot(np.absolute(obs[2::]))
+        reward -= np.sum(action*0.01)
 
         reward += alive
         
@@ -64,7 +65,7 @@ class Drone_zero(Drone):
     def reset(self):
         limit = Drone.LIMITS - self.arm_length - 0.1
 
-        phi = 0
+        phi = (np.random.rand(1) * 2 - 1) * self.maxAngle/2
 
         pos = limit * (2*np.random.rand(2) - 1)
         state = np.array([
