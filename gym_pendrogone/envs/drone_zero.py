@@ -27,19 +27,25 @@ class Drone_zero(Drone):
             or np.absolute(self.state[1]) > Drone.LIMITS[1]
             
         return +1 if not dead else -20
+        # return 0.0 if not dead else -100
         
     def step(self, action):
         self._apply_action(action)
         obs = self._get_obs()
+        dist = np.linalg.norm([ obs[2], obs[3]])
         
         alive = float(self.alive_bonus())
         done = alive < 0
 
         state_r = -np.array([1e-1, 1e-1, 5e-3, 5e-3, 5e-2]) * np.absolute(obs[2::])
+        # state_r = -np.array([1.0, 1.0, 5e-3, 5e-3, 5e-2]) * np.absolute(obs[2::])
         control_r = -np.absolute(action)*0.01
         alive_r = np.array([alive])
 
-        reward = np.concatenate((state_r, control_r, alive_r))
+        reward = np.concatenate((state_r, control_r, alive_r)) \
+            if dist > 0.15 else \
+               np.concatenate((state_r, control_r))
+        
         # reward = np.concatenate((state_r, control_r))
         reward = np.sum(reward)
 
