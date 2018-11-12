@@ -36,11 +36,12 @@ class Drone_zero(Drone):
         done = alive < 0
 
         state_r = -np.array([1e-1, 1e-1, 5e-3, 5e-3, 5e-2]) * np.absolute(obs[2::])
-        control_r = -action*0.01
+        control_r = -np.absolute(action)*0.01
         alive_r = np.array([alive])
 
         reward = np.concatenate((state_r, control_r, alive_r))
-        # reward = np.sum(reward) if summed else reward
+        # reward = np.concatenate((state_r, control_r))
+        reward = np.sum(reward)
 
         return obs, reward , done, {}
 
