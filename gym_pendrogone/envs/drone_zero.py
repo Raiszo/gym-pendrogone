@@ -26,10 +26,42 @@ class Drone_zero(Drone):
             or np.absolute(self.state[0]) > Drone.LIMITS[0] \
             or np.absolute(self.state[1]) > Drone.LIMITS[1]
             
-        return +1 if not dead else -20
-        # return 0.0 if not dead else -100
-        
+        return -20 if dead else +1
+
+    def calc_potential(self):
+        dist = np.linalg.norm([ self.state[0] - self.objective[0],
+                                self.state[1] - self.objective[1] ])
+
+        return - dist
+    
     def step(self, action):
+        # print(action)
+        # print(self.state)
+        old_potential = self.potential
+
+        self._apply_action(action)
+        obs = self._get_obs()
+        alive = float(self.alive_bonus())
+
+        done = alive < 0
+
+        # print(self.state)
+        self.potential = potential = self.calc_potential()
+        # print(old_potential)
+        # print(potential)
+
+        pot_r = 10 * (potential - old_potential)
+        # vel_r = - np.array([5e-3, 5e-3, 5e-2]).dot(obs[4::])
+        control_r = - 0.01 * np.ones_like(action).dot(action)
+        alive_r = alive
+        closer_r = +20.0 if potential > -0.3 else 0.0
+
+        reward = np.array([pot_r, control_r, alive_r, closer_r])
+        reward = np.sum(reward)
+
+        return obs, reward, done, {}
+        
+    def _old_step(self, action):
         self._apply_action(action)
         obs = self._get_obs()
         dist = np.linalg.norm([ obs[2], obs[3]])
@@ -39,7 +71,7 @@ class Drone_zero(Drone):
 
         state_r = -np.array([1e-1, 1e-1, 5e-3, 5e-3, 5e-2]) * np.absolute(obs[2::])
         # state_r = -np.array([1.0, 1.0, 5e-3, 5e-3, 5e-2]) * np.absolute(obs[2::])
-        control_r = -np.absolute(action)*0.01
+        
         alive_r = np.array([alive])
 
         reward = np.concatenate((state_r, control_r, alive_r)) \
@@ -84,5 +116,6 @@ class Drone_zero(Drone):
         ])
         self.state = np.concatenate((state, np.zeros(3)))
         self.objective = np.array([0.0, 0.0])
+        self.potential = self.calc_potential()
 
         return self._get_obs()
