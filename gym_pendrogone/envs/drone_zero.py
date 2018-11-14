@@ -4,6 +4,10 @@ import gym
 from . import Drone
 
 class Drone_zero(Drone):
+    def __init__(self):
+        super().__init__()
+        self.reward_shape = Drone_zero.normal_dist(0, np.sqrt(0.1))
+        
     def _get_obs(self):
         x, z, phi, xdot, zdot, phidot = self.state
 
@@ -33,10 +37,16 @@ class Drone_zero(Drone):
                                 self.state[1] - self.objective[1] ])
 
         return - dist
+
+    @staticmethod
+    def normal_dist(mu, sigma_2):
+        c = 1/np.sqrt(2*np.pi*sigma_2)
+
+        return lambda x : c * np.exp( - (x-mu)**2 / (2*sigma_2) )
     
     def step(self, action):
         # print(action)
-        # print(self.state)
+        # print(self.state[0:2])
         old_potential = self.potential
 
         self._apply_action(action)
@@ -44,17 +54,15 @@ class Drone_zero(Drone):
         alive = float(self.alive_bonus())
 
         done = alive < 0
-
-        # print(self.state)
         self.potential = potential = self.calc_potential()
-        # print(old_potential)
-        # print(potential)
 
-        pot_r = 10 * (potential - old_potential)
+        pot_r = 50 * (potential - old_potential)
         # vel_r = - np.array([5e-3, 5e-3, 5e-2]).dot(obs[4::])
         control_r = - 0.01 * np.ones_like(action).dot(action)
         alive_r = alive
-        closer_r = +20.0 if potential > -0.3 else 0.0
+        # print('>',potential)
+        closer_r = self.reward_shape(potential)
+        # closer_r = +20.0 if potential > -0.3 else 0.0
 
         reward = np.array([pot_r, control_r, alive_r, closer_r])
         reward = np.sum(reward)
