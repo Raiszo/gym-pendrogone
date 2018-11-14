@@ -13,7 +13,7 @@ class Drone(gym.Env):
         'video.frames_per_second' : 50
     }
 
-    def __init__(self, inspect_reward=False):
+    def __init__(self):
         self.gravity = 9.81 #: [m/s2] acceleration
         self.mass = 0.5 #: [kg] mass
         self.Ixx = 0.00232
@@ -52,7 +52,6 @@ class Drone(gym.Env):
         self.seed()
         self.viewer = None
         self.state = None
-        self.inspect_reward = inspect_reward
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
