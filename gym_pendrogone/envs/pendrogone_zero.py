@@ -7,8 +7,9 @@ LIMITS = np.array([1.5, 1.5])
 T = 0.02
 
 class Pendrogone_zero(Pendrogone):
-    # def __init__(self):
-    #     super()__init__()
+    def __init__(self):
+        super().__init__()
+        self.reward_shape = Pendrogone_zero.normal_dist(0, np.sqrt(0.1))
 
     def _get_load_pos(self):
         load_pos = Pendrogone.transform( self.state[0:2],
@@ -26,8 +27,9 @@ class Pendrogone_zero(Pendrogone):
         angle_2_target = load_target_theta - phi
 
         return np.array([
-            z,
-            np.sin(angle_2_target), np.cos(angle_2_target),
+            x, z,
+            load_pos[0], load_pos[1],
+            # np.sin(angle_2_target), np.cos(angle_2_target),
             xdot, zdot,
             thdot, phidot,
             np.sin(th), np.cos(th),
@@ -35,50 +37,45 @@ class Pendrogone_zero(Pendrogone):
         ], dtype=np.float32)
 
     def alive_bonus(self):
-        # dead = self.state[2] < -self.q_maxAngle \
-        #     or self.state[2] > self.q_maxAngle \
-        #     or self.state[3] < -self.l_maxAngle \
-        #     or self.state[3] > self.l_maxAngle \
-        #     or self.state[1] < -(LIMITS[1]+0.5)
-        dead = self.state[1] < -(LIMITS[1]+0.5)
+        dead = self.state[2] < -self.q_maxAngle \
+            or self.state[2] > self.q_maxAngle \
+            or self.state[3] < -self.l_maxAngle \
+            or self.state[3] > self.l_maxAngle \
+            or self.state[1] < -LIMITS[1]
 
-        return +20 if not dead else -100
+        return -20 if dead else +1
 
     def calc_potential(self, load_pos):
         dist = np.linalg.norm([ load_pos[0] - self.objective[0],
                                 load_pos[1] - self.objective[1] ])
-        return - dist / T
+        return - dist
+
+    @staticmethod
+    def normal_dist(mu, sigma_2):
+        c = 1/np.sqrt(2*np.pi*sigma_2)
+
+        return lambda x : c * np.exp( - (x-mu)**2 / (2*sigma_2) )
 
     def step(self, action):
-        self._apply_action(action)
+        old_potential = self.potential
 
+        self._apply_action(action)
         load_pos = self._get_load_pos()
         obs = self._get_obs(load_pos)
-
         alive = float(self.alive_bonus())
+
         done = alive < 0
-        # done = False
-        
-        old_potential = self.potential
-        self.potential = self.calc_potential(load_pos)
-        progress = float(self.potential - old_potential)
+        self.potential = potential = self.calc_potential(load_pos)
 
-        control_cost = -0.01 * np.sum(action**2)
-        stability = 1 - (-self.potential/0.5)**0.4
-        # dot_cost = - np.array([0.01, 0.01, 0.01, 0.01]).dot(self.state[4:]**2)
+        pot_r = 100 * (potential - old_potential)
+        control_r = - 0.01 * np.ones_like(action).dot(action)
+        alive_r = alive
+        closer_r = self.reward_shape(potential)
 
-        rewards = [
-            # progress,
-            # control_cost,
-            # dot_cost,
-            # stability,
-            # alive
-            -self.state[1]**2
-        ]
-        # print(obs)
-        # print(rewards)
+        reward = np.array([pot_r, control_r, alive_r, closer_r])
+        reward = np.sum(reward)
         
-        return obs, sum(rewards), done, {}
+        return obs, reward, done, {}
 
     def _apply_action(self, u):
         x, z, phi, th, xdot, zdot, phidot, thdot = self.state
