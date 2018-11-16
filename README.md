@@ -31,4 +31,5 @@ If error with pyglet, something like: "invalid literal for int() with base 10: '
 - Additional bonus reward of +20 when potential > -20, only encourages the agent to oscillate around the actual goal, greedy bastard -_-.
 
 #### 07-11-2018
-With just absolute distance, control effort and a +1 alive bonus still drives to agent to kill itself, it's like: "Existence is pain, I just want to die". Guess that like in real life, a really distant enormous reward is not enough to motivate the agent to explore, even worse if any action comes with a cost.
+- With just absolute distance, control effort and a +1 alive bonus still drives to agent to kill itself.
+- It's like: "Existence is pain, I just want to die". Guess that like in real life, a really distant enormous reward is not enough to motivate the agent to explore, even worse if any action comes with a cost. What one learns about life while doing some simple RL. :)
