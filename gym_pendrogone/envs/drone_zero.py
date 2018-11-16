@@ -6,7 +6,8 @@ from . import Drone
 class Drone_zero(Drone):
     def __init__(self):
         super().__init__()
-        self.reward_shape = Drone_zero.normal_dist(0, np.sqrt(0.1))
+        # self.reward_shape = Drone_zero.normal_dist(0, 0.1)
+        self.reward_shape = Drone_zero.exponential()
         
     def _get_obs(self):
         x, z, phi, xdot, zdot, phidot = self.state
@@ -43,6 +44,10 @@ class Drone_zero(Drone):
         c = 1/np.sqrt(2*np.pi*sigma_2)
 
         return lambda x : c * np.exp( - (x-mu)**2 / (2*sigma_2) )
+
+    @staticmethod
+    def exponential():
+        return lambda x : max(1.5 - (3*x) ** 0.4, 0.0)
     
     def step(self, action):
         # print(action)
@@ -61,7 +66,7 @@ class Drone_zero(Drone):
         control_r = - 0.01 * np.ones_like(action).dot(action)
         alive_r = alive
         # print('>',potential)
-        closer_r = self.reward_shape(potential)
+        closer_r = self.reward_shape(-potential)
         # closer_r = +20.0 if potential > -0.3 else 0.0
 
         reward = np.array([pot_r, control_r, alive_r, closer_r])
