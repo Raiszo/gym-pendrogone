@@ -3,11 +3,10 @@ import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
 
-# width height
-LIMITS = np.array([1.5, 1.5])
-T = 0.02
-
 class Pendrogone(gym.Env):
+    LIMITS = np.array([1.5, 1.5])
+    T = 0.02
+
     metadata = {
         'render.modes': ['human'],
         'video.frames_per_second' : 1/T
@@ -23,19 +22,19 @@ class Pendrogone(gym.Env):
         self.arm_width = 0.02 # [m]
         self.height = 0.02 # [m]
         # limits
-        self.q_maxAngle = 90 * np.pi / 180
+        self.q_maxAngle = np.pi / 2
 
         ## Load stuff
         self.lmass = 0.09
         self.cable_length = 0.3
         self.cable_width = 0.01
-        self.l_maxAngle = 75 * np.pi / 180
+        self.l_maxAngle = np.pi / 2.1
 
         self.Mass = self.qmass + self.lmass
         # max and min force for each motor
         self.maxF = 2 * self.Mass * self.gravity
         self.minF = 0
-        self.dt = T
+        self.dt = Pendrogone.T
 
         """
         **The state had 8 dimensions:
@@ -46,6 +45,10 @@ class Pendrogone(gym.Env):
         """
         
         high = np.array([
+            1.0,
+            1.0,
+            1.0,
+            1.0,
             np.finfo(np.float32).max, # x
             np.finfo(np.float32).max, # z
             np.finfo(np.float32).max, # x_load
@@ -55,10 +58,6 @@ class Pendrogone(gym.Env):
             np.finfo(np.float32).max, # thdot
             np.finfo(np.float32).max, # phidot
             # 1.0,
-            1.0,
-            1.0,
-            1.0,
-            1.0,
         ])
         
         self.action_space = spaces.Box(
@@ -107,8 +106,8 @@ class Pendrogone(gym.Env):
 
         if self.viewer is None:
             self.viewer = rendering.Viewer(screen_width, screen_height)
-            self.viewer.set_bounds(-LIMITS[0], LIMITS[0],
-                                   -LIMITS[1], LIMITS[1])
+            self.viewer.set_bounds(-Pendrogone.LIMITS[0], Pendrogone.LIMITS[0],
+                                   -Pendrogone.LIMITS[1], Pendrogone.LIMITS[1])
             
             ql,qr,qt,qb = -self.arm_length, self.arm_length, self.arm_width, -self.arm_width
             self.frame_trans = rendering.Transform(rotation=phi, translation=(x,z))

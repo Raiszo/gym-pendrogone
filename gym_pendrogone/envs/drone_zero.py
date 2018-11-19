@@ -50,8 +50,6 @@ class Drone_zero(Drone):
         return lambda x : max(1.5 - (3*x) ** 0.4, 0.0)
     
     def step(self, action):
-        # print(action)
-        # print(self.state[0:2])
         old_potential = self.potential
 
         self._apply_action(action)

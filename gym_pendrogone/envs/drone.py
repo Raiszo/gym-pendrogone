@@ -10,7 +10,7 @@ class Drone(gym.Env):
     
     metadata = {
         'render.modes': ['human'],
-        'video.frames_per_second' : 50
+        'video.frames_per_second' : 1/T
     }
 
     def __init__(self):
