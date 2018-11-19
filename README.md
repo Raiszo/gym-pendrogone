@@ -18,6 +18,9 @@ If error with pyglet, something like: "invalid literal for int() with base 10: '
 
 # Log
 
+#### 18-11-2018
+- The reason why PendrogoneZero-v0 seemed impossible was a wrong dynamic equation. Now the trouble is make a clear gradient to the goal
+- As suggested by [Ross Story](https://www.youtube.com/watch?v=0R3PnJEisqk), I'm trying a velocity discount in the load angle, to leave less oscillations at the end of the movement.
 #### 15-11-2018
 - The agent converges to goal!!!!, using an exponential bonus as suggested [here](https://medium.com/@BonsaiAI/deep-reinforcement-learning-models-tips-tricks-for-writing-reward-functions-a84fe525e8e0)
 - Enough testing in the drone env, next: add these rewards to the pendrogone env :D
