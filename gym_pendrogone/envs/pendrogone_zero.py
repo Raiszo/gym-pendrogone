@@ -3,13 +3,11 @@ import gym
 
 from . import Pendrogone
 
-LIMITS = np.array([1.5, 1.5])
-T = 0.02
-
 class Pendrogone_zero(Pendrogone):
     def __init__(self):
         super().__init__()
-        self.reward_shape = Pendrogone_zero.normal_dist(0, np.sqrt(0.1))
+        # self.reward_shape = Pendrogone_zero.normal_dist(0, np.sqrt(0.1))
+        self.reward_shape = Pendrogone_zero.exponential()
 
     def _get_load_pos(self):
         load_pos = Pendrogone.transform( self.state[0:2],
@@ -27,13 +25,13 @@ class Pendrogone_zero(Pendrogone):
         angle_2_target = load_target_theta - phi
 
         return np.array([
+            np.sin(th), np.cos(th),
+            np.sin(phi), np.cos(phi),
             x, z,
             load_pos[0], load_pos[1],
             # np.sin(angle_2_target), np.cos(angle_2_target),
             xdot, zdot,
             thdot, phidot,
-            np.sin(th), np.cos(th),
-            np.sin(phi), np.cos(phi),
         ], dtype=np.float32)
 
     def alive_bonus(self):
@@ -41,9 +39,10 @@ class Pendrogone_zero(Pendrogone):
             or self.state[2] > self.q_maxAngle \
             or self.state[3] < -self.l_maxAngle \
             or self.state[3] > self.l_maxAngle \
-            or self.state[1] < -LIMITS[1]
+            or np.absolute(self.state[0]) > Pendrogone.LIMITS[0] \
+            or np.absolute(self.state[1]) > Pendrogone.LIMITS[1]
 
-        return -20 if dead else +1
+        return -50 if dead else +1
 
     def calc_potential(self, load_pos):
         dist = np.linalg.norm([ load_pos[0] - self.objective[0],
@@ -56,6 +55,10 @@ class Pendrogone_zero(Pendrogone):
 
         return lambda x : c * np.exp( - (x-mu)**2 / (2*sigma_2) )
 
+    @staticmethod
+    def exponential():
+        return lambda x : max(1.5 - (2.25*x) ** 0.4, 0.0)
+
     def step(self, action):
         old_potential = self.potential
 
@@ -67,13 +70,13 @@ class Pendrogone_zero(Pendrogone):
         done = alive < 0
         self.potential = potential = self.calc_potential(load_pos)
 
-        pot_r = 100 * (potential - old_potential)
+        pot_r = 20 * (potential - old_potential)
         control_r = - 0.01 * np.ones_like(action).dot(action)
         alive_r = alive
-        closer_r = self.reward_shape(potential)
+        closer_r = self.reward_shape(-potential)
 
         reward = np.array([pot_r, control_r, alive_r, closer_r])
-        reward = np.sum(reward)
+        # reward = np.sum(reward)
         
         return obs, reward, done, {}
 
@@ -89,8 +92,8 @@ class Pendrogone_zero(Pendrogone):
             zdot,
             phidot,
             thdot,
-            (-F*np.cos(phi - th) - self.qmass*self.cable_length*th*2) * np.sin(th) / self.Mass,
-            (-F*np.cos(phi - th) - self.qmass*self.cable_length*th*2) * np.sin(th) / self.Mass - self.gravity,
+            (-F*np.cos(phi - th) - self.qmass*self.cable_length*thdot*2) * np.sin(th) / self.Mass,
+            (-F*np.cos(phi - th) - self.qmass*self.cable_length*thdot*2) * np.cos(th) / self.Mass - self.gravity,
             M / self.Ixx,
             np.sin(phi - th) / (self.qmass * self.cable_length)
         ])
@@ -105,19 +108,16 @@ class Pendrogone_zero(Pendrogone):
         sampling a position for the quadrotor and then
         calculating the load position
         """
-        limit = LIMITS - self.cable_length
+        limit = Pendrogone.LIMITS - self.cable_length
         mean = np.mean(limit)
         
         q_abs = 2*limit * np.random.rand(2) - mean
+        # q_abs = np.array([0.0, 1.0])
         # phi = np.random.rand(1) * 2*self.q_maxAngle - self.q_maxAngle
         # theta = np.random.rand(1) * 2*self.l_maxAngle - self.l_maxAngle
         phi = 0.0
         theta = 0.0
         
-        l_rel = np.array([0.0, -self.cable_length])
-        # print(l_rel)
-        l_abs = Pendrogone.transform(q_abs, theta, l_rel)
-
         state = np.array([
             q_abs[0],
             q_abs[1],
