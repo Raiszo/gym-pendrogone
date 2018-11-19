@@ -57,8 +57,9 @@ class Pendrogone_zero(Pendrogone):
 
     @staticmethod
     def exponential():
-        return lambda d, v : max(3 - (3*d) ** 0.4, 0.0) * \
-            (4 - min(4, max(v, 0.001)))/4 ** (1/max(0.1, d))
+        # return lambda d, v : max(3 - (3*d) ** 0.4, 0.0) * \
+        #     (4 - min(4, max(v, 0.001)))/4 ** (1/max(0.1, d))
+        return lambda d : max(3 - (8*d) ** 0.4, 0.0)
 
 
     def step(self, action):
@@ -72,14 +73,15 @@ class Pendrogone_zero(Pendrogone):
         done = alive < 0
         self.potential = potential = self.calc_potential(load_pos)
 
-        pot_r = 80 * (potential - old_potential)
+        pot_r = 50 * (potential - old_potential)
         control_r = - 0.01 * np.ones_like(action).dot(action)
         alive_r = alive
-        closer_r = self.reward_shape(-potential, np.absolute(self.state[3]))
+        closer_r = self.reward_shape(-potential)
+        # closer_r = self.reward_shape(-potential, np.absolute(self.state[3]))
         # print(-potential, np.absolute(self.state[2]))
 
         reward = np.array([pot_r, control_r, alive_r, closer_r])
-        # reward = np.sum(reward)
+        reward = np.sum(reward)
         
         return obs, reward, done, {}
 
