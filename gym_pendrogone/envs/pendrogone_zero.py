@@ -6,8 +6,8 @@ from . import Pendrogone
 class Pendrogone_zero(Pendrogone):
     def __init__(self):
         super().__init__()
-        # self.reward_shape = Pendrogone_zero.normal_dist(0, np.sqrt(0.1))
-        self.reward_shape = Pendrogone_zero.exponential()
+        self.reward_shape = Pendrogone_zero.normal_dist(0, np.sqrt(0.1))
+        # self.reward_shape = Pendrogone_zero.exponential()
 
     def _get_load_pos(self):
         load_pos = Pendrogone.transform( self.state[0:2],
@@ -73,11 +73,11 @@ class Pendrogone_zero(Pendrogone):
         done = alive < 0
         self.potential = potential = self.calc_potential(load_pos)
 
-        pot_r = 50 * (potential - old_potential)
+        pot_r = 100 * (potential - old_potential)
         control_r = - 0.01 * np.ones_like(action).dot(action)
         alive_r = alive
-        closer_r = self.reward_shape(-potential)
-        stable_r = self.reward_shape(np.absolute(self.state[2]))
+        closer_r = self.reward_shape(-potential) * \
+            self.reward_shape(np.absolute(self.state[7]))
         # closer_r = self.reward_shape(-potential, np.absolute(self.state[3]))
         # print(-potential, np.absolute(self.state[2]))
 
