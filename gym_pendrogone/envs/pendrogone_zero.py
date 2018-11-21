@@ -42,7 +42,7 @@ class Pendrogone_zero(Pendrogone):
             or np.absolute(self.state[0]) > Pendrogone.LIMITS[0] \
             or np.absolute(self.state[1]) > Pendrogone.LIMITS[1]
 
-        return -20 if dead else +1
+        return -50 if dead else +1
 
     def calc_potential(self, load_pos):
         dist = np.linalg.norm([ load_pos[0] - self.objective[0],
@@ -119,10 +119,10 @@ class Pendrogone_zero(Pendrogone):
         
         q_abs = 2*limit * np.random.rand(2) - mean
         # q_abs = np.array([0.0, 1.0])
-        # phi = np.random.rand(1) * 2*self.q_maxAngle - self.q_maxAngle
-        # theta = np.random.rand(1) * 2*self.l_maxAngle - self.l_maxAngle
-        phi = 0.0
-        theta = 0.0
+        phi = (np.random.rand(1) * 2 - 1) * self.q_maxAngle/2
+        theta = (np.random.rand(1) * 2 - 1) * self.l_maxAngle/2
+        # phi = 0.0
+        # theta = 0.0
         
         state = np.array([
             q_abs[0],
