@@ -47,10 +47,14 @@ class Pendrogone(gym.Env):
         """
         
         high = np.array([
+            1.0,
+            1.0,
+            1.0,
+            1.0,
             np.finfo(np.float32).max,
             np.finfo(np.float32).max,
-            self.q_maxAngle,
-            self.l_maxAngle,
+            1.0,
+            1.0,
             np.finfo(np.float32).max,
             np.finfo(np.float32).max,
             np.finfo(np.float32).max,

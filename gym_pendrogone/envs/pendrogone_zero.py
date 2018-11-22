@@ -19,10 +19,10 @@ class Pendrogone_zero(Pendrogone):
     def _get_obs(self, load_pos):
         x, z, phi, th, xdot, zdot, phidot, thdot = self.state # th := theta
 
-        load_target_theta = np.arctan2( load_pos[0] - self.objective[0],
-                                        load_pos[1] - self.objective[1] )
+        quad_angle = np.arctan2( self.objective[1]+self.cable_length - self.state[1],
+                                        self.objective[0] - self.state[0] )
 
-        angle_2_target = load_target_theta - phi
+        angle_2_target = quad_angle - phi
 
         return np.array([
             np.sin(th), np.cos(th),
@@ -64,6 +64,7 @@ class Pendrogone_zero(Pendrogone):
 
     def step(self, action):
         old_potential = self.potential
+        # old_vel = self.state[7]
 
         self._apply_action(action)
         load_pos = self._get_load_pos()
@@ -72,16 +73,25 @@ class Pendrogone_zero(Pendrogone):
 
         done = alive < 0
         self.potential = potential = self.calc_potential(load_pos)
+        # self.acceleration = 
 
         pot_r = 100 * (potential - old_potential)
-        control_r = - 0.01 * np.ones_like(action).dot(action)
+        control_r = - 0.05 * np.ones_like(action).dot(action)
         alive_r = alive
-        closer_r = self.reward_shape(-potential) * \
-            self.reward_shape(np.absolute(self.state[7]))
-        # closer_r = self.reward_shape(-potential, np.absolute(self.state[3]))
+        # print(self.state[7])
+        # if -potential > 0.1:
+        #     closer_r = self.reward_shape(-potential) * \
+        #         (1 - min(3, max(np.absolute(self.state[7]), 0.1))/3)**(1/max(-potential, 0.1))
+        # else:
+        #     closer_r = 2*self.reward_shape(-potential)
+        closer_r = self.reward_shape(-potential)
+        velocity = np.linalg.norm([ self.state[4], self.state[5] ])
+        velo_r = self.reward_shape(velocity)
+
+        # closer_r = self.reward_shape(-potential)
         # print(-potential, np.absolute(self.state[2]))
 
-        reward = np.array([pot_r, control_r, alive_r, closer_r])
+        reward = np.array([pot_r, control_r, alive_r, closer_r, velo_r])
         reward = np.sum(reward)
         
         return obs, reward, done, {}
@@ -135,6 +145,7 @@ class Pendrogone_zero(Pendrogone):
         
         load_pos = self._get_load_pos()
         self.potential = self.calc_potential(load_pos)
+        # self.acceleration = 0.0
 
         return self._get_obs(load_pos)
 
