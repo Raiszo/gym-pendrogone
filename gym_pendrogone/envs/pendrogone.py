@@ -16,19 +16,19 @@ class Pendrogone(gym.Env):
         self.gravity = 9.81 #: [m/s2] acceleration
 
         ## Quadrotor stuff
-        self.qmass = 0.5 #: [kg] mass
+        self.qmass = 0.76 #: [kg] mass
         self.Ixx = 0.00232
-        self.arm_length = 0.1 # [m]
+        self.arm_length = 0.22 # [m]
         self.arm_width = 0.02 # [m]
         self.height = 0.02 # [m]
         # limits
         self.q_maxAngle = np.pi / 2
 
         ## Load stuff
-        self.lmass = 0.09
-        self.cable_length = 0.3
+        self.lmass = 0.146
+        self.cable_length = 0.82
         self.cable_width = 0.01
-        self.l_maxAngle = np.pi / 2.1
+        self.l_maxAngle = np.pi / 3
 
         self.Mass = self.qmass + self.lmass
         # max and min force for each motor
