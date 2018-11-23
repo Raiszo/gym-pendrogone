@@ -6,8 +6,8 @@ from . import Pendrogone
 class Pendrogone_zero(Pendrogone):
     def __init__(self):
         super().__init__()
-        self.reward_shape = Pendrogone_zero.normal_dist(0, np.sqrt(0.1))
-        # self.reward_shape = Pendrogone_zero.exponential()
+        # self.reward_shape = Pendrogone_zero.normal_dist(0, np.sqrt(0.1))
+        self.reward_shape = Pendrogone_zero.exponential()
 
     def _get_load_pos(self):
         load_pos = Pendrogone.transform( self.state[0:2],
@@ -19,8 +19,8 @@ class Pendrogone_zero(Pendrogone):
     def _get_obs(self, load_pos):
         x, z, phi, th, xdot, zdot, phidot, thdot = self.state # th := theta
 
-        quad_angle = np.arctan2( self.objective[1]+self.cable_length - self.state[1],
-                                        self.objective[0] - self.state[0] )
+        quad_angle = np.arctan2( self.objective[1] + self.cable_length - self.state[1],
+                                 self.objective[0] - self.state[0] )
 
         angle_2_target = quad_angle - phi
 
@@ -35,13 +35,11 @@ class Pendrogone_zero(Pendrogone):
         ], dtype=np.float32)
 
     def alive_bonus(self):
-        dead = self.state[2] < -self.q_maxAngle \
-            or self.state[2] > self.q_maxAngle \
-            or self.state[3] < -self.l_maxAngle \
-            or self.state[3] > self.l_maxAngle \
+        dead = np.absolute(self.state[2]) > self.q_maxAngle \
+            or np.absolute(self.state[3]) > self.l_maxAngle \
             or np.absolute(self.state[0]) > Pendrogone.LIMITS[0] \
             or np.absolute(self.state[1]) > Pendrogone.LIMITS[1]
-
+        
         return -100 if dead else +1
 
     def calc_potential(self, load_pos):
@@ -64,8 +62,9 @@ class Pendrogone_zero(Pendrogone):
 
 
     def step(self, action):
+        print(action)
         action = np.clip(action, 0, self.maxF)
-        # print(action)
+        print('clipped', action)
 
         old_potential = self.potential
         old_phi = self.state
@@ -80,7 +79,7 @@ class Pendrogone_zero(Pendrogone):
         self.potential = potential = self.calc_potential(load_pos)
         # self.acceleration = 
 
-        pot_dist_r = 50 * (potential - old_potential)
+        pot_dist_r = 100 * (potential - old_potential)
         control_r = - 0.01 * np.ones_like(action).dot(action)
         alive_r = alive
         # print(self.state[7])
