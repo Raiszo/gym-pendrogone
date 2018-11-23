@@ -42,7 +42,7 @@ class Pendrogone_zero(Pendrogone):
             or np.absolute(self.state[0]) > Pendrogone.LIMITS[0] \
             or np.absolute(self.state[1]) > Pendrogone.LIMITS[1]
 
-        return -50 if dead else +1
+        return -100 if dead else +1
 
     def calc_potential(self, load_pos):
         dist = np.linalg.norm([ load_pos[0] - self.objective[0],
@@ -64,7 +64,9 @@ class Pendrogone_zero(Pendrogone):
 
 
     def step(self, action):
-        
+        action = np.clip(action, 0, self.maxF)
+        # print(action)
+
         old_potential = self.potential
         old_phi = self.state
         # old_vel = self.state[7]
@@ -78,7 +80,7 @@ class Pendrogone_zero(Pendrogone):
         self.potential = potential = self.calc_potential(load_pos)
         # self.acceleration = 
 
-        pot_dist_r = 100 * (potential - old_potential)
+        pot_dist_r = 50 * (potential - old_potential)
         control_r = - 0.01 * np.ones_like(action).dot(action)
         alive_r = alive
         # print(self.state[7])
@@ -92,8 +94,8 @@ class Pendrogone_zero(Pendrogone):
         # closer_r = self.reward_shape(-potential)
         # print(-potential, np.absolute(self.state[2]))
 
-        reward = np.array([pot_dist_r, pot_vel_r, control_r, alive_r, closer_r])
-        # reward = np.sum(reward)
+        reward = np.array([pot_dist_r, control_r, alive_r, closer_r])
+        reward = np.sum(reward)
         
         return obs, reward, done, {}
 
@@ -130,10 +132,10 @@ class Pendrogone_zero(Pendrogone):
         
         q_abs = 2*limit * np.random.rand(2) - mean
         # q_abs = np.array([0.0, 1.0])
-        phi = (np.random.rand(1) * 2 - 1) * self.q_maxAngle/2
-        theta = (np.random.rand(1) * 2 - 1) * self.l_maxAngle/2
-        # phi = 0.0
-        # theta = 0.0
+        # phi = (np.random.rand(1) * 2 - 1) * self.q_maxAngle - 0.1
+        # theta = (np.random.rand(1) * 2 - 1) * self.l_maxAngle - 0.1
+        phi = 0.0
+        theta = 0.0
         
         state = np.array([
             q_abs[0],
