@@ -53,8 +53,8 @@ class Pendrogone(gym.Env):
             np.finfo(np.float32).max, # z
             # 1.0,
             # 1.0,
-            np.finfo(np.float32).max, # x_load
-            np.finfo(np.float32).max, # z_load
+            # np.finfo(np.float32).max, # x_load
+            # np.finfo(np.float32).max, # z_load
             np.finfo(np.float32).max, # xdot
             np.finfo(np.float32).max, # zdot
             np.finfo(np.float32).max, # thdot

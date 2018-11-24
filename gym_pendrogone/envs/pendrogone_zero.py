@@ -28,11 +28,11 @@ class Pendrogone_zero(Pendrogone):
             np.sin(th), np.cos(th),
             np.sin(phi), np.cos(phi),
             x, z,
-            load_pos[0], load_pos[1],
+            # load_pos[0], load_pos[1],
             # np.sin(angle_2_target), np.cos(angle_2_target),
             xdot, zdot,
             thdot, phidot,
-        ], dtype=np.float32)
+        ])
 
     def alive_bonus(self):
         dead = np.absolute(self.state[2]) > self.q_maxAngle \
@@ -45,6 +45,8 @@ class Pendrogone_zero(Pendrogone):
     def calc_potential(self, load_pos):
         dist = np.linalg.norm([ load_pos[0] - self.objective[0],
                                 load_pos[1] - self.objective[1] ])
+        # dist = np.linalg.norm([ self.state[0] - self.objective[0],
+        #                         self.state[1] - self.objective[1] ])
 
         return - dist
 
@@ -58,29 +60,26 @@ class Pendrogone_zero(Pendrogone):
     def exponential():
         # return lambda d, v : max(3 - (3*d) ** 0.4, 0.0) * \
         #     (4 - min(4, max(v, 0.001)))/4 ** (1/max(0.1, d))
-        return lambda d : max(1.5 - (3*d) ** 0.4, 0.0)
+        return lambda d : max(1.5 - (4*d) ** 0.4, 0.0)
 
 
     def step(self, action):
-        print(action)
         action = np.clip(action, 0, self.maxF)
-        print('clipped', action)
+        # print('clipped', action)
 
         old_potential = self.potential
-        old_phi = self.state
-        # old_vel = self.state[7]
 
         self._apply_action(action)
         load_pos = self._get_load_pos()
         obs = self._get_obs(load_pos)
-        alive = float(self.alive_bonus())
 
+        alive = float(self.alive_bonus())
         done = alive < 0
         self.potential = potential = self.calc_potential(load_pos)
         # self.acceleration = 
 
-        pot_dist_r = 100 * (potential - old_potential)
-        control_r = - 0.01 * np.ones_like(action).dot(action)
+        pot_dist_r = 20 * (potential - old_potential)
+        control_r = -0.01 * np.ones_like(action).dot(action)
         alive_r = alive
         # print(self.state[7])
         # if -potential > 0.1:
@@ -94,7 +93,7 @@ class Pendrogone_zero(Pendrogone):
         # print(-potential, np.absolute(self.state[2]))
 
         reward = np.array([pot_dist_r, control_r, alive_r, closer_r])
-        reward = np.sum(reward)
+        # reward = np.sum(reward)
         
         return obs, reward, done, {}
 
