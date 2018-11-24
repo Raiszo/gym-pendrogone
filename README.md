@@ -18,6 +18,9 @@ If error with pyglet, something like: "invalid literal for int() with base 10: '
 
 # Log
 
+### 23-11-2018
+- Quite strange, the drone actually learns that a sufficient thrust will keep it floating, the pendrogone does not, always going for more negative thurst that will be clipped to 0. What an emo ;'v
+
 ### 20-11-2018
 - The load goes to the goal, but there's still reward shaping to be done, gonna try random phi / theta initialization, hope it helps ;'v
 
