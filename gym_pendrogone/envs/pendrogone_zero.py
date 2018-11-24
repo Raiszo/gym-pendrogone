@@ -40,7 +40,7 @@ class Pendrogone_zero(Pendrogone):
             or np.absolute(self.state[0]) > Pendrogone.LIMITS[0] \
             or np.absolute(self.state[1]) > Pendrogone.LIMITS[1]
         
-        return -100 if dead else +1
+        return -20 if dead else +1
 
     def calc_potential(self, load_pos):
         dist = np.linalg.norm([ load_pos[0] - self.objective[0],
@@ -60,12 +60,11 @@ class Pendrogone_zero(Pendrogone):
     def exponential():
         # return lambda d, v : max(3 - (3*d) ** 0.4, 0.0) * \
         #     (4 - min(4, max(v, 0.001)))/4 ** (1/max(0.1, d))
-        return lambda d : max(1.5 - (4*d) ** 0.4, 0.0)
+        return lambda d : max(1.5 - (3*d) ** 0.4, 0.0)
 
 
     def step(self, action):
         action = np.clip(action, 0, self.maxF)
-        # print('clipped', action)
 
         old_potential = self.potential
 
@@ -78,7 +77,7 @@ class Pendrogone_zero(Pendrogone):
         self.potential = potential = self.calc_potential(load_pos)
         # self.acceleration = 
 
-        pot_dist_r = 20 * (potential - old_potential)
+        pot_dist_r = 50 * (potential - old_potential)
         control_r = -0.01 * np.ones_like(action).dot(action)
         alive_r = alive
         # print(self.state[7])
@@ -93,7 +92,7 @@ class Pendrogone_zero(Pendrogone):
         # print(-potential, np.absolute(self.state[2]))
 
         reward = np.array([pot_dist_r, control_r, alive_r, closer_r])
-        # reward = np.sum(reward)
+        reward = np.sum(reward)
         
         return obs, reward, done, {}
 
@@ -110,9 +109,9 @@ class Pendrogone_zero(Pendrogone):
             phidot,
             thdot,
             (-F*np.cos(phi - th) - self.qmass*self.cable_length*thdot*2) * np.sin(th) / self.Mass,
-            (-F*np.cos(phi - th) - self.qmass*self.cable_length*thdot*2) * np.cos(th) / self.Mass - self.gravity,
+            (-F*np.cos(phi - th) - self.qmass*self.cable_length*thdot*2) * (-np.cos(th)) / self.Mass - self.gravity,
             M / self.Ixx,
-            np.sin(phi - th) / (self.qmass * self.cable_length)
+            F*np.sin(phi - th) / (self.qmass * self.cable_length)
         ])
 
         neu_state = sdot * self.dt + self.state
