@@ -52,6 +52,8 @@ class Drone_zero(Drone):
     def step(self, action):
         old_potential = self.potential
 
+        # print(action)
+        action = np.clip(action, 0, self.maxF)
         self._apply_action(action)
         obs = self._get_obs()
         alive = float(self.alive_bonus())
