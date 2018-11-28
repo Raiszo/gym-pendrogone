@@ -40,7 +40,7 @@ class Pendrogone_zero(Pendrogone):
             or np.absolute(self.state[0]) > Pendrogone.LIMITS[0] \
             or np.absolute(self.state[1]) > Pendrogone.LIMITS[1]
         
-        return -30 if dead else +0.5
+        return -100 if dead else +0.8
 
     def calc_potential(self, load_pos):
         dist = np.linalg.norm([ load_pos[0] - self.objective[0],
@@ -61,7 +61,7 @@ class Pendrogone_zero(Pendrogone):
         # return lambda d, v : max(3 - (3*d) ** 0.4, 0.0) * \
         #     (4 - min(4, max(v, 0.001)))/4 ** (1/max(0.1, d))
         # return lambda d : 3*max(1 - (d/4) ** 0.4, 0.0)
-        return lambda d : np.exp(-np.abs(d))
+        return lambda d : np.exp(-np.abs(d*2))
 
 
     def step(self, action):
