@@ -81,8 +81,8 @@ class Pendrogone_zero(Pendrogone):
         vel = 100 * (potential - old_potential)
         control_r = -0.05 * np.ones_like(action).dot(action)
         alive_r = alive
-        shape_r = 5*self.reward_shape(-potential)*\
-            np.exp(-np.abs(vel)*(1/max(potential, 0.1)))
+        shape_r = self.reward_shape(-potential)*\
+            np.exp(-np.abs(vel)*(1/max(-potential, 0.1)))
 
         reward = np.array([vel, control_r, alive_r, shape_r])
         # reward = np.sum(reward)
