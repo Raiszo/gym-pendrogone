@@ -40,7 +40,7 @@ class Pendrogone_zero(Pendrogone):
             or np.absolute(self.state[0]) > Pendrogone.LIMITS[0] \
             or np.absolute(self.state[1]) > Pendrogone.LIMITS[1]
         
-        return -100 if dead else +0.8
+        return -100 if dead else +0.5
 
     def calc_potential(self, load_pos):
         dist = np.linalg.norm([ load_pos[0] - self.objective[0],
@@ -61,7 +61,7 @@ class Pendrogone_zero(Pendrogone):
         # return lambda d, v : max(3 - (3*d) ** 0.4, 0.0) * \
         #     (4 - min(4, max(v, 0.001)))/4 ** (1/max(0.1, d))
         # return lambda d : 3*max(1 - (d/4) ** 0.4, 0.0)
-        return lambda d : np.exp(-np.abs(d*2))
+        return lambda d : 2*np.exp(-np.abs(d*2))
 
 
     def step(self, action):
@@ -78,21 +78,13 @@ class Pendrogone_zero(Pendrogone):
         self.potential = potential = self.calc_potential(load_pos)
         # self.acceleration = 
 
-        pot_dist_r = 100 * (potential - old_potential)
+        vel = 100 * (potential - old_potential)
         control_r = -0.05 * np.ones_like(action).dot(action)
         alive_r = alive
-        # print(self.state[7])
-        # if -potential > 0.1:
-        #     closer_r = self.reward_shape(-potential) * \
-        #         (1 - min(3, max(np.absolute(self.state[7]), 0.1))/3)**(1/max(-potential, 0.1))
-        # else:
-        #     closer_r = 2*self.reward_shape(-potential)
-        closer_r = self.reward_shape(-potential)
+        shape_r = 5*self.reward_shape(-potential)*\
+            np.exp(-np.abs(vel)*(1/max(potential, 0.1)))
 
-        # closer_r = self.reward_shape(-potential)
-        # print(-potential, np.absolute(self.state[2]))
-
-        reward = np.array([pot_dist_r, control_r, alive_r, closer_r])
+        reward = np.array([vel, control_r, alive_r, shape_r])
         # reward = np.sum(reward)
         
         return obs, reward, done, {}

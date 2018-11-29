@@ -87,7 +87,7 @@ class Pendrogone(gym.Env):
                        [np.sin(angle),  np.cos(angle)] ])
         return x0 + T.dot(xb)
 
-    def render(self, mode='human', close=False):
+    def render(self, mode='rgb_array', close=False):
         from gym.envs.classic_control import rendering
         screen_width = 800
         screen_height = 800
