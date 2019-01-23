@@ -117,11 +117,10 @@ class Pendrogone_zero(Pendrogone):
         sampling a position for the quadrotor and then
         calculating the load position
         """
-        diff = Pendrogone.LIMITS[1] - Pendrogone.LIMITS[0]
-        r = np.random.rand(2)
-        print(r, diff)
-        q_abs = r*diff + Pendrogone.LIMITS[0]
-        print(q_abs)
+        limit = Pendrogone.LIMITS - self.cable_length
+        # mean = np.mean(limit)
+        
+        q_abs = 2*limit * np.random.rand(2) - limit
         # phi = (np.random.rand(1) * 2 - 1) * self.q_maxAngle - 0.1
         # theta = (np.random.rand(1) * 2 - 1) * self.l_maxAngle - 0.1
         phi = 0.0

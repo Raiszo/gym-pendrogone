@@ -4,7 +4,7 @@ from gym import error, spaces, utils
 from gym.utils import seeding
 
 class Pendrogone(gym.Env):
-    LIMITS = np.array([2, 2])
+    LIMITS = np.array([2.5, 2.5])
     T = 0.02
 
     metadata = {
