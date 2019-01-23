@@ -61,7 +61,7 @@ class Pendrogone_zero(Pendrogone):
         # return lambda d, v : max(3 - (3*d) ** 0.4, 0.0) * \
         #     (4 - min(4, max(v, 0.001)))/4 ** (1/max(0.1, d))
         # return lambda d : 3*max(1 - (d/4) ** 0.4, 0.0)
-        return lambda d : 2*np.exp(-np.abs(d*2))
+        return lambda d : np.exp(-np.abs(d*2))
 
 
     def step(self, action):
@@ -81,8 +81,8 @@ class Pendrogone_zero(Pendrogone):
         vel = 100 * (potential - old_potential)
         control_r = -0.05 * np.ones_like(action).dot(action)
         alive_r = alive
-        shape_r = self.reward_shape(-potential)*\
-            np.exp(-np.abs(vel)*(1/max(-potential, 0.1)))
+        shape_r = 2*self.reward_shape(-potential)*\
+            np.exp(-np.abs(vel)*(1/max(-potential, 0.2)))
 
         reward = np.array([vel, control_r, alive_r, shape_r])
         # reward = np.sum(reward)
@@ -117,11 +117,11 @@ class Pendrogone_zero(Pendrogone):
         sampling a position for the quadrotor and then
         calculating the load position
         """
-        limit = Pendrogone.LIMITS - self.cable_length
-        mean = np.mean(limit)
-        
-        q_abs = 2*limit * np.random.rand(2) - mean
-        # q_abs = np.array([0.0, 1.0])
+        diff = Pendrogone.LIMITS[1] - Pendrogone.LIMITS[0]
+        r = np.random.rand(2)
+        print(r, diff)
+        q_abs = r*diff + Pendrogone.LIMITS[0]
+        print(q_abs)
         # phi = (np.random.rand(1) * 2 - 1) * self.q_maxAngle - 0.1
         # theta = (np.random.rand(1) * 2 - 1) * self.l_maxAngle - 0.1
         phi = 0.0
