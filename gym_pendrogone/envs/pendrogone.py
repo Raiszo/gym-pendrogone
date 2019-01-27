@@ -1,6 +1,6 @@
 import numpy as np
 import gym
-from gym import error, spaces, utils
+from gym import spaces
 from gym.utils import seeding
 
 class Pendrogone(gym.Env):
@@ -21,6 +21,7 @@ class Pendrogone(gym.Env):
         self.arm_length = 0.22 # [m]
         self.arm_width = 0.02 # [m]
         self.height = 0.02 # [m]
+
         # limits
         self.q_maxAngle = np.pi / 2
 
@@ -32,12 +33,12 @@ class Pendrogone(gym.Env):
 
         self.Mass = self.qmass + self.lmass
         # max and min force for each motor
-        self.maxF = 2 * self.Mass * self.gravity
-        self.minF = 0
+        self.maxU = self.Mass * self.gravity
+        self.minU = 0
         self.dt = Pendrogone.T
 
         """
-        **The state had 8 dimensions:
+        The state has 8 dimensions:
          xm,zm :quadrotor position
          phi :quadrotor angle
          theta :load angle, for now the tension in the cable 
@@ -51,20 +52,15 @@ class Pendrogone(gym.Env):
             1.0,
             np.finfo(np.float32).max, # x
             np.finfo(np.float32).max, # z
-            # 1.0,
-            # 1.0,
-            # np.finfo(np.float32).max, # x_load
-            # np.finfo(np.float32).max, # z_load
             np.finfo(np.float32).max, # xdot
             np.finfo(np.float32).max, # zdot
             np.finfo(np.float32).max, # thdot
             np.finfo(np.float32).max, # phidot
-            # 1.0,
         ])
         
         self.action_space = spaces.Box(
-            low = np.array([self.minF, self.minF]),
-            high = np.array([self.maxF, self.maxF]),
+            low = np.array([self.minU, self.minU]),
+            high = np.array([self.maxU, self.maxU]),
             dtype = np.float32
         )
         self.observation_space = spaces.Box(
@@ -76,6 +72,31 @@ class Pendrogone(gym.Env):
         self.seed()
         self.viewer = None
         self.state = None # yet :v
+        self.load_pos = None # Better to put it there [ load_x, loady_z ]
+
+    def _apply_action(self, u):
+        x, z, phi, th, xdot, zdot, phidot, thdot = self.state
+
+        clipped_u = np.clip(u, self.action_space.low, self.action_space.high)
+        
+        u1, u2 = clipped_u
+        F = u1 + u2
+        M = (u2 - u1) * self.arm_length
+
+        sdot = np.array([
+            xdot,
+            zdot,
+            phidot,
+            thdot,
+            (-F*np.cos(phi - th) - self.qmass*self.cable_length*thdot*2) * np.sin(th) / self.Mass,
+            (-F*np.cos(phi - th) - self.qmass*self.cable_length*thdot*2) * (-np.cos(th)) / self.Mass - self.gravity,
+            M / self.Ixx,
+            F*np.sin(phi - th) / (self.qmass * self.cable_length)
+        ])
+
+        self.state = sdot * self.dt + self.state
+
+        return clipped_u
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
