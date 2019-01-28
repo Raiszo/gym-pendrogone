@@ -40,6 +40,9 @@ class Pendrogone_zero(Pendrogone):
 
         return -100 if dead else +0.5
 
+    @staticmethod
+    def shaped(pos, vel):
+        pass
 
     @staticmethod
     def normal_dist(mu, sigma_2):
