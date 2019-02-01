@@ -13,8 +13,11 @@ class Pendrogone_zero(Pendrogone):
         old_potential = self.potential
         self._apply_action(action)
         obs = self._get_obs()
+        load_pos, load_vel = self._get_load_info()
         self.potential = potential = self.calc_potential()
 
+        self.load_pos = load_pos
+        self.load_vel = load_vel
 
         alive = float(self.alive_bonus())
         done = alive < 0
@@ -22,12 +25,12 @@ class Pendrogone_zero(Pendrogone):
         alive_r = alive
 
         pot_r = 100 * (potential - old_potential)
-        velocity = np.linalg.norm([ self.state[4], self.state[5] ])
+        vel_r = np.linalg.norm([ self.state[4], self.state[5] ])
         # -potential = distance to the objective
         shape_r = 2 * self.reward_shape(-potential) * \
-            np.exp(-np.abs(velocity)*(1/max(-potential, 0.2)))
+            np.exp(-np.abs(load_vel)*(1/max(-potential, 0.2)))
 
-        reward = np.array([vel, control_r, alive_r, shape_r])
+        reward = np.array([control_r, alive_r, pot_r, vel_r, shape_r])
         # reward = np.sum(reward)
 
         return obs, reward, done, {}
@@ -82,6 +85,7 @@ class Pendrogone_zero(Pendrogone):
         self.load_pos = Pendrogone.transform(self.state[0:2],
                                              self.state[3],
                                              np.array([0, -self.cable_length]))
+        self.load_vel = np.array([0.0, 0.0])
 
         # Calculate the initial potential
         self.potential = self.calc_potential()
@@ -93,6 +97,15 @@ class Pendrogone_zero(Pendrogone):
                                 self.load_pos[1] - self.objective[1]] )
 
         return - dist
+
+    def _get_load_info(self):
+        old_pos = self.load_pos
+        load_pos = Pendrogone.transform(self.state[0:2],
+                                             self.state[3],
+                                             np.array([0, -self.cable_length]))
+        load_vel = (self.load_po - old_pos) / self.dT
+
+        return load_pos, load_vel
 
     def _get_obs(self):
         x, z, phi, th, xdot, zdot, phidot, thdot = self.state  # th := theta

@@ -78,6 +78,7 @@ class Pendrogone(gym.Env):
         self.viewer = None
         self.state = None # yet :v
         self.load_pos = None # Better to put it there [ load_x, loady_z ]
+        self.load_vel = None # Don't want to use the equations
 
     def _apply_action(self, u):
         x, z, phi, th, xdot, zdot, phidot, thdot = self.state
