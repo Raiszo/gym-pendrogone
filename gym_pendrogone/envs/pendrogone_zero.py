@@ -66,10 +66,10 @@ class Pendrogone_zero(Pendrogone):
         limit = Pendrogone.LIMITS - self.cable_length
 
         q_abs = 2*limit * np.random.rand(2) - limit
-        phi = (np.random.rand(1) * 2 - 1) * self.q_maxAngle - 0.1
-        theta = (np.random.rand(1) * 2 - 1) * self.l_maxAngle - 0.1
-        # phi = 0.0
-        # theta = 0.0
+        # phi = (np.random.rand(1) * 2 - 1) * self.q_maxAngle - 0.1
+        # theta = (np.random.rand(1) * 2 - 1) * self.l_maxAngle - 0.1
+        phi = 0.0
+        theta = 0.0
 
         self.state = np.array([
             q_abs[0],

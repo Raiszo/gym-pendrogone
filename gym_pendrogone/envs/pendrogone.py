@@ -44,18 +44,23 @@ class Pendrogone(gym.Env):
          theta :load angle, for now the tension in the cable 
                 is always non zero
         """
-        
+
         high = np.array([
-            1.0,
-            1.0,
-            1.0,
-            1.0,
             np.finfo(np.float32).max, # x
             np.finfo(np.float32).max, # z
+
+            1.0, # Sth
+            1.0, # Cth
+            1.0, # Sphi
+            1.0, # Cphi
+
             np.finfo(np.float32).max, # xdot
             np.finfo(np.float32).max, # zdot
             np.finfo(np.float32).max, # thdot
             np.finfo(np.float32).max, # phidot
+
+            np.finfo(np.float32).max, # load_pos_x
+            np.finfo(np.float32).max, # load_pos_z
         ])
         
         self.action_space = spaces.Box(
