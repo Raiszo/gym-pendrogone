@@ -25,12 +25,11 @@ class Pendrogone_zero(Pendrogone):
         alive_r = alive
 
         pot_r = 100 * (potential - old_potential)
-        vel_r = np.linalg.norm([ self.state[4], self.state[5] ])
+        vel = np.linalg.norm([ self.state[4], self.state[5] ])
         # -potential = distance to the objective
-        shape_r = 2 * self.reward_shape(-potential) * \
-            np.exp(-np.abs(load_vel)*(1/max(-potential, 0.2)))
+        shape_r = self.reward_shaping(-potential, vel)
 
-        reward = np.array([control_r, alive_r, pot_r, vel_r, shape_r])
+        reward = np.array([control_r, alive_r, pot_r, shape_r])
         # reward = np.sum(reward)
 
         return obs, reward, done, {}
@@ -44,8 +43,11 @@ class Pendrogone_zero(Pendrogone):
         return -100 if dead else +0.5
 
     @staticmethod
-    def shaped(pos, vel):
-        pass
+    def reward_shaping(dist, vel):
+        dist_r = np.exp(- np.abs(dist*2))
+        vel_r = np.exp(-np.abs(vel)*(1/max(dist, 0.2)))
+
+        return 2 * dist_r * vel_r
 
     @staticmethod
     def normal_dist(mu, sigma_2):
@@ -103,7 +105,7 @@ class Pendrogone_zero(Pendrogone):
         load_pos = Pendrogone.transform(self.state[0:2],
                                              self.state[3],
                                              np.array([0, -self.cable_length]))
-        load_vel = (self.load_po - old_pos) / self.dT
+        load_vel = (load_pos - old_pos) / self.dt
 
         return load_pos, load_vel
 
