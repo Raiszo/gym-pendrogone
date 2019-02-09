@@ -46,7 +46,7 @@ class Pendrogone_zero(Pendrogone):
     def reward_shaping(dist, vel):
         # print(dist, vel)
         dist_r = np.exp(- np.abs(dist*2))
-        vel_r = np.exp(-np.abs(vel)*(1/max(dist, 0.2)))
+        vel_r = np.exp(-np.abs(vel)*(1/np.maximum(dist, 0.2)))
 
         return 2 * dist_r * vel_r
 
