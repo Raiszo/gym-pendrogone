@@ -21,16 +21,17 @@ class Pendrogone_zero(Pendrogone):
 
         alive = float(self.alive_bonus())
         done = alive < 0
-        control_r = -0.05 * np.ones_like(action).dot(action)
+        control_r = -0.05 * action.dot(action)
+        # print(control_r)
         alive_r = alive
 
-        # pot_r = 50 * (potential - old_potential)
+        pot_r = 30 * (potential - old_potential)
         vel = np.linalg.norm([ self.state[4], self.state[5] ])
         # -potential = distance to the objective
         shape_r = self.reward_shaping(-potential, vel)
 
-        # reward = np.array([control_r, alive_r, pot_r, shape_r])
-        reward = np.array([control_r, alive_r, shape_r])
+        reward = np.array([control_r, alive_r, pot_r, shape_r])
+        # reward = np.array([control_r, alive_r, shape_r])
         # reward = np.sum(reward)
 
         return obs, reward, done, {}
@@ -46,11 +47,12 @@ class Pendrogone_zero(Pendrogone):
     @staticmethod
     def reward_shaping(dist, vel):
         # print(dist, vel)
+        c = 5
         dist_r = np.exp(- np.abs(1.2*dist)**2)
         vel_r = np.power(np.exp(- np.abs(vel)), np.exp(- 2 * np.abs(dist)))
         # vel_r = np.exp(- np.abs(vel))
 
-        return dist_r * vel_r
+        return c * dist_r * vel_r
 
     @staticmethod
     def normal_dist(mu, sigma_2):
