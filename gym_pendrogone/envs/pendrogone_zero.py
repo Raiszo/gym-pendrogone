@@ -25,7 +25,7 @@ class Pendrogone_zero(Pendrogone):
         # print(control_r)
         alive_r = alive
 
-        pot_r = 30 * (potential - old_potential)
+        pot_r = 50 * (potential - old_potential)
         vel = np.linalg.norm([ self.state[4], self.state[5] ])
         # -potential = distance to the objective
         shape_r = self.reward_shaping(-potential, vel)
@@ -48,8 +48,8 @@ class Pendrogone_zero(Pendrogone):
     def reward_shaping(dist, vel):
         # print(dist, vel)
         c = 5
-        dist_r = np.exp(- np.abs(1.2*dist)**2)
-        vel_r = np.power(np.exp(- np.abs(vel)), np.exp(- 2 * np.abs(dist)))
+        dist_r = np.exp(- np.abs(1.9*dist)**2)
+        vel_r = np.power(np.exp(- np.abs(vel)), np.exp(- 2.5 * np.abs(dist)))
         # vel_r = np.exp(- np.abs(vel))
 
         return c * dist_r * vel_r
