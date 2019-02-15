@@ -51,8 +51,11 @@ class Pendrogone_zero(Pendrogone):
         dist_r = np.exp(- np.abs(1.9*dist)**2)
         vel_r = np.power(np.exp(- np.abs(vel)), np.exp(- 2.5 * np.abs(dist)))
         # vel_r = np.exp(- np.abs(vel))
-
-        return c * dist_r * vel_r
+        mask = (dist <= 0.2) * (vel > 1)
+        if 
+            return -3
+        else:
+            return c * dist_r * vel_r
 
     @staticmethod
     def normal_dist(mu, sigma_2):
