@@ -16,7 +16,7 @@ class Pendrogone(gym.Env):
         self.gravity = 9.81 #: [m/s2] acceleration
 
         ## Quadrotor stuff
-        self.qmass = 0.76 #: [kg] mass
+        self.q_mass = 0.76 #: [kg] mass
         self.Ixx = 0.00232
         self.arm_length = 0.22 # [m]
         self.arm_width = 0.02 # [m]
@@ -26,12 +26,12 @@ class Pendrogone(gym.Env):
         self.q_maxAngle = np.pi / 2
 
         ## Load stuff
-        self.lmass = 0.146
+        self.l_mass = 0.146
         self.cable_length = 0.82
         self.cable_width = 0.01
         self.l_maxAngle = np.pi / 3
 
-        self.Mass = self.qmass + self.lmass
+        self.Mass = self.q_mass + self.l_mass
         # max and min force for each motor
         self.maxU = self.Mass * self.gravity
         self.minU = 0
@@ -80,6 +80,14 @@ class Pendrogone(gym.Env):
         self.load_pos = None # Better to put it there [ load_x, loady_z ]
         self.load_vel = None # Don't want to use the equations
 
+    @property
+    def load_pos(self):
+        return Pendrogone.transform(
+            self.state[0:2],
+            self.state[3],
+            np.array([0, -self.cable_length])
+        )
+
     def _apply_action(self, u):
         x, z, phi, th, xdot, zdot, phidot, thdot = self.state
 
@@ -94,10 +102,10 @@ class Pendrogone(gym.Env):
             zdot,
             phidot,
             thdot,
-            (-F*np.cos(phi - th) - self.qmass*self.cable_length*thdot*2) * np.sin(th) / self.Mass,
-            (-F*np.cos(phi - th) - self.qmass*self.cable_length*thdot*2) * (-np.cos(th)) / self.Mass - self.gravity,
+            (-F*np.cos(phi - th) - self.q_mass*self.cable_length*thdot*2) * np.sin(th) / self.Mass,
+            (-F*np.cos(phi - th) - self.q_mass*self.cable_length*thdot*2) * (-np.cos(th)) / self.Mass - self.gravity,
             M / self.Ixx,
-            F*np.sin(phi - th) / (self.qmass * self.cable_length)
+            F*np.sin(phi - th) / (self.q_mass * self.cable_length)
         ])
 
         self.state = sdot * self.dt + self.state

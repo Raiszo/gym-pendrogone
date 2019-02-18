@@ -92,9 +92,6 @@ class Pendrogone_zero(Pendrogone):
             0, 0, 0, 0
         ])
         self.objective = np.array([0.0, 0.0])
-        self.load_pos = Pendrogone.transform(self.state[0:2],
-                                             self.state[3],
-                                             np.array([0, -self.cable_length]))
         self.load_vel = np.array([0.0, 0.0])
 
         # Calculate the initial potential
