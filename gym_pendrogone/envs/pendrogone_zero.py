@@ -5,36 +5,29 @@ from . import Pendrogone
 class Pendrogone_zero(Pendrogone):
     def __init__(self):
         super().__init__()
-        # self.reward_shape = Pendrogone_zero.normal_dist(0, np.sqrt(0.1))
-        # self.reward_shape = Pendrogone_zero.exponential()
 
     def step(self, action):
         # This first block of code should not change
         old_potential = self.potential
+        old_load_pos = self.load_pos
+        
         self._apply_action(action)
-        obs = self._get_obs()
-        load_pos, load_vel = self._get_load_info()
-        self.potential = potential = self.calc_potential()
-
-        self.load_pos = load_pos
-        self.load_vel = load_vel
-
-        alive = float(self.alive_bonus())
-        done = alive < 0
+        
+        potential = self.potential
+        load_vel = (self.load_pos - old_load_pos) / self.dt
+        
         control_r = -0.05 * action.dot(action)
-        # print(control_r)
-        alive_r = alive
-
+        alive_r = float(self.alive_bonus())
         pot_r = 50 * (potential - old_potential)
-        vel = np.linalg.norm([ self.state[4], self.state[5] ])
+
         # -potential = distance to the objective
-        shape_r = self.reward_shaping(-potential, vel)
+        shape_r = Pendrogone_zero.reward_shaping( -potential,
+                                                  np.linalg.norm(load_vel) )
 
         reward = np.array([control_r, alive_r, pot_r, shape_r])
-        # reward = np.array([control_r, alive_r, shape_r])
-        # reward = np.sum(reward)
+        done = alive_r < 0
 
-        return obs, reward, done, {}
+        return self.obs, reward, done, {}
 
     def alive_bonus(self):
         dead = np.absolute(self.state[2]) > self.q_maxAngle \
@@ -42,20 +35,19 @@ class Pendrogone_zero(Pendrogone):
             or np.absolute(self.state[0]) > Pendrogone.LIMITS[0] \
             or np.absolute(self.state[1]) > Pendrogone.LIMITS[1]
 
-        return -100 if dead else +0.5
+        return -150 if dead else +0.5
 
     @staticmethod
     def reward_shaping(dist, vel):
         # print(dist, vel)
         c = 5
-        dist_r = np.exp(- np.abs(1.9*dist)**2)
+        dist_r = np.exp(- np.abs(3.5*dist)**2)
         vel_r = np.power(np.exp(- np.abs(vel)), np.exp(- 2.5 * np.abs(dist)))
         # vel_r = np.exp(- np.abs(vel))
         mask = (dist <= 0.2) * (vel > 1)
-        if 
-            return -3
-        else:
-            return c * dist_r * vel_r
+        result = c * dist_r * vel_r
+
+        return np.logical_not(mask) * result + mask * -3.0
 
     @staticmethod
     def normal_dist(mu, sigma_2):
@@ -70,51 +62,8 @@ class Pendrogone_zero(Pendrogone):
         # return lambda d : 3*max(1 - (d/4) ** 0.4, 0.0)
         return lambda d : np.exp(- np.abs(d*2))
 
-    def reset(self):
-        """
-        Set a random objective position for the load
-        sampling a position for the quadrotor and then
-        calculating the load position
-        """
-        limit = Pendrogone.LIMITS - self.cable_length
-
-        q_abs = 2*limit * np.random.rand(2) - limit
-        # phi = (np.random.rand(1) * 2 - 1) * self.q_maxAngle - 0.1
-        # theta = (np.random.rand(1) * 2 - 1) * self.l_maxAngle - 0.1
-        phi = 0.0
-        theta = 0.0
-
-        self.state = np.array([
-            q_abs[0],
-            q_abs[1],
-            phi,
-            theta,
-            0, 0, 0, 0
-        ])
-        self.objective = np.array([0.0, 0.0])
-        self.load_vel = np.array([0.0, 0.0])
-
-        # Calculate the initial potential
-        self.potential = self.calc_potential()
-
-        return self._get_obs()
-
-    def calc_potential(self):
-        dist = np.linalg.norm([ self.load_pos[0] - self.objective[0],
-                                self.load_pos[1] - self.objective[1]] )
-
-        return - dist
-
-    def _get_load_info(self):
-        old_pos = self.load_pos
-        load_pos = Pendrogone.transform(self.state[0:2],
-                                             self.state[3],
-                                             np.array([0, -self.cable_length]))
-        load_vel = (load_pos - old_pos) / self.dt
-
-        return load_pos, load_vel
-
-    def _get_obs(self):
+    @property
+    def obs(self):
         x, z, phi, th, xdot, zdot, phidot, thdot = self.state  # th := theta
 
         quad_angle = np.arctan2(

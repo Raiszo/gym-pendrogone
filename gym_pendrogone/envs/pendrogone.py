@@ -76,9 +76,8 @@ class Pendrogone(gym.Env):
 
         self.seed()
         self.viewer = None
+        # Need to always call the render() method
         self.state = None # yet :v
-        self.load_pos = None # Better to put it there [ load_x, loady_z ]
-        self.load_vel = None # Don't want to use the equations
 
     @property
     def load_pos(self):
@@ -87,6 +86,13 @@ class Pendrogone(gym.Env):
             self.state[3],
             np.array([0, -self.cable_length])
         )
+
+    @property
+    def potential(self):
+        dist = np.linalg.norm([ self.load_pos[0] - self.objective[0],
+                                self.load_pos[1] - self.objective[1]] )
+
+        return - dist
 
     def _apply_action(self, u):
         x, z, phi, th, xdot, zdot, phidot, thdot = self.state
@@ -111,6 +117,31 @@ class Pendrogone(gym.Env):
         self.state = sdot * self.dt + self.state
 
         return clipped_u
+
+    def reset(self):
+        """
+        Set a random objective position for the load
+        sampling a position for the quadrotor and then
+        calculating the load position
+        """
+        limit = Pendrogone.LIMITS - self.cable_length
+
+        q_abs = 2*limit * np.random.rand(2) - limit
+        # phi = (np.random.rand(1) * 2 - 1) * self.q_maxAngle - 0.1
+        # theta = (np.random.rand(1) * 2 - 1) * self.l_maxAngle - 0.1
+        phi = 0.0
+        theta = 0.0
+
+        self.state = np.array([
+            q_abs[0],
+            q_abs[1],
+            phi,
+            theta,
+            0, 0, 0, 0
+        ])
+        self.objective = np.array([0.0, 0.0])
+
+        return self.obs
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
