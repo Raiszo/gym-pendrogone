@@ -46,21 +46,18 @@ class Pendrogone(gym.Env):
         """
 
         high = np.array([
-            np.finfo(np.float32).max, # x
-            np.finfo(np.float32).max, # z
+            np.finfo(np.float32).max, # xl
+            np.finfo(np.float32).max, # zl
 
             1.0, # Sth
             1.0, # Cth
             1.0, # Sphi
             1.0, # Cphi
 
-            np.finfo(np.float32).max, # xdot
-            np.finfo(np.float32).max, # zdot
-            np.finfo(np.float32).max, # thdot
-            np.finfo(np.float32).max, # phidot
-
-            np.finfo(np.float32).max, # load_pos_x
-            np.finfo(np.float32).max, # load_pos_z
+            np.finfo(np.float32).max, # xl_dot
+            np.finfo(np.float32).max, # zl_dot
+            np.finfo(np.float32).max, # th_dot
+            np.finfo(np.float32).max, # phi_dot
         ])
         
         self.action_space = spaces.Box(
@@ -79,23 +76,8 @@ class Pendrogone(gym.Env):
         # Need to always call the render() method
         self.state = None # yet :v
 
-    @property
-    def load_pos(self):
-        return Pendrogone.transform(
-            self.state[0:2],
-            self.state[3],
-            np.array([0, -self.cable_length])
-        )
-
-    @property
-    def potential(self):
-        dist = np.linalg.norm([ self.load_pos[0] - self.objective[0],
-                                self.load_pos[1] - self.objective[1]] )
-
-        return - dist
-
     def _apply_action(self, u):
-        x, z, phi, th, xdot, zdot, phidot, thdot = self.state
+        xl, zl, phi, th, xl_dot, zl_dot, phi_dot, th_dot = self.state
 
         clipped_u = np.clip(u, self.action_space.low, self.action_space.high)
         
@@ -104,12 +86,12 @@ class Pendrogone(gym.Env):
         M = (u2 - u1) * self.arm_length
 
         sdot = np.array([
-            xdot,
-            zdot,
-            phidot,
-            thdot,
-            (-F*np.cos(phi - th) - self.q_mass*self.cable_length*thdot*2) * np.sin(th) / self.Mass,
-            (-F*np.cos(phi - th) - self.q_mass*self.cable_length*thdot*2) * (-np.cos(th)) / self.Mass - self.gravity,
+            xl_dot,
+            zl_dot,
+            phi_dot,
+            th_dot,
+            (F*np.cos(phi - th) - self.q_mass*self.cable_length*th_dot*2) * np.sin(th) / self.Mass,
+            (F*np.cos(phi - th) - self.q_mass*self.cable_length*th_dot*2) * (-np.cos(th)) / self.Mass - self.gravity,
             M / self.Ixx,
             F*np.sin(phi - th) / (self.q_mass * self.cable_length)
         ])
@@ -126,16 +108,17 @@ class Pendrogone(gym.Env):
         """
         limit = Pendrogone.LIMITS - self.cable_length
 
-        q_abs = 2*limit * np.random.rand(2) - limit
+        pos_load = 2*limit * np.random.rand(2) - limit
         # phi = (np.random.rand(1) * 2 - 1) * self.q_maxAngle - 0.1
         # theta = (np.random.rand(1) * 2 - 1) * self.l_maxAngle - 0.1
         phi = 0.0
         theta = 0.0
 
         self.state = np.array([
-            q_abs[0],
-            q_abs[1],
+            pos_load[0],
+            pos_load[1],
             phi,
+            # this angle is taken from the intertial z cordinate
             theta,
             0, 0, 0, 0
         ])
@@ -153,22 +136,35 @@ class Pendrogone(gym.Env):
                        [np.sin(angle),  np.cos(angle)] ])
         return x0 + T.dot(xb)
 
+    @property
+    def pos_quad(self):
+        """
+        Quadrotor position in the inertial frame
+        """
+        return self.state[0:2] - self.cable_length * self.p
+
+    @property
+    def p(self):
+        """
+        unit vector from quadrotor to the load
+        """
+        return np.array([ np.sin(self.state[3]), -np.cos(self.statep[3]) ])
+
     def render(self, mode='human'):
         from gym.envs.classic_control import rendering
         screen_width = 800
         screen_height = 800
 
-        x,z,phi,theta = self.state[0:4].tolist()
+        xl,zl,phi,theta = self.state[0:4].tolist()
+        xq,zq = self.pos_quad
 
-        t1_xy = Pendrogone.transform(self.state[0:2],
+        t1_xy = Pendrogone.transform(self.pos_quad,
                                      self.state[2],
                                      np.array([self.arm_length, 0]))
-        t2_xy = Pendrogone.transform(self.state[0:2],
+        t2_xy = Pendrogone.transform(self.pos_quad,
                                      self.state[2],
                                      np.array([-self.arm_length, 0]))
-        tl_xy = Pendrogone.transform(self.state[0:2],
-                                     self.state[3],
-                                     np.array([0, -self.cable_length]))
+        tl_xy = self.state[0:2]
 
         to_xy = self.objective
 
@@ -176,39 +172,45 @@ class Pendrogone(gym.Env):
             self.viewer = rendering.Viewer(screen_width, screen_height)
             self.viewer.set_bounds(-Pendrogone.LIMITS[0], Pendrogone.LIMITS[0],
                                    -Pendrogone.LIMITS[1], Pendrogone.LIMITS[1])
-            
+
+            # Render quadrotor frame
             ql,qr,qt,qb = -self.arm_length, self.arm_length, self.arm_width, -self.arm_width
-            self.frame_trans = rendering.Transform(rotation=phi, translation=(x,z))
+            self.frame_trans = rendering.Transform(rotation=phi, translation=(xq,zq))
             frame = rendering.FilledPolygon([(ql,qb), (ql,qt), (qr,qt), (qr,qb)])
             frame.set_color(0, .8, .8)
             frame.add_attr(self.frame_trans)
             self.viewer.add_geom(frame)
 
+            # Render load cable
             ll,lr,lt,lb = -self.cable_width, self.cable_width, 0, -self.cable_length
-            self.cable_trans = rendering.Transform(rotation=theta, translation=(x,z))
+            self.cable_trans = rendering.Transform(rotation=theta, translation=(xq,zq))
             cable = rendering.FilledPolygon([(ll,lb), (ll,lt), (lr,lt), (lr,lb)])
             cable.set_color(.1, .1, .1)
             cable.add_attr(self.cable_trans)
             self.viewer.add_geom(cable)
-            
+
+            # Render right propeller
             self.t1_trans = rendering.Transform(translation=t1_xy)
             thruster1 = self.viewer.draw_circle(.04)
             thruster1.set_color(.8, .8, 0)
             thruster1.add_attr(self.t1_trans)
             self.viewer.add_geom(thruster1)
 
+            # Render left propeller 
             self.t2_trans = rendering.Transform(translation=t2_xy)
             thruster2 = self.viewer.draw_circle(.04)
             thruster2.set_color(.8, .8, 0)
             thruster2.add_attr(self.t2_trans)
             self.viewer.add_geom(thruster2)
 
+            # Render load
             self.tl_trans = rendering.Transform(translation=tl_xy)
             load = self.viewer.draw_circle(.08)
             load.set_color(.8, .3, .8)
             load.add_attr(self.tl_trans)
             self.viewer.add_geom(load)
 
+            # Render objective point
             self.to_trans = rendering.Transform(translation=to_xy)
             objective = self.viewer.draw_circle(.02)
             objective.set_color(1., .01, .01)
