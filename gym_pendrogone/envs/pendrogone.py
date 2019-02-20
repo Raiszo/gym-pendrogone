@@ -148,7 +148,7 @@ class Pendrogone(gym.Env):
         """
         unit vector from quadrotor to the load
         """
-        return np.array([ np.sin(self.state[3]), -np.cos(self.statep[3]) ])
+        return np.array([ np.sin(self.state[3]), -np.cos(self.state[3]) ])
 
     def render(self, mode='human'):
         from gym.envs.classic_control import rendering
@@ -218,9 +218,9 @@ class Pendrogone(gym.Env):
             self.viewer.add_geom(objective)
 
             
-        self.frame_trans.set_translation(x,z)
+        self.frame_trans.set_translation(xq,zq)
         self.frame_trans.set_rotation(phi)
-        self.cable_trans.set_translation(x,z)
+        self.cable_trans.set_translation(xq,zq)
         self.cable_trans.set_rotation(theta)
         
         self.t1_trans.set_translation(t1_xy[0], t1_xy[1])

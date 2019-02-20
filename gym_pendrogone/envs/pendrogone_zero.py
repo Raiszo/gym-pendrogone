@@ -9,12 +9,10 @@ class Pendrogone_zero(Pendrogone):
     def step(self, action):
         # This first block of code should not change
         old_potential = self.potential
-        old_load_pos = self.load_pos
         
         self._apply_action(action)
         
         potential = self.potential
-        load_vel = (self.load_pos - old_load_pos) / self.dt
         
         control_r = -0.05 * action.dot(action)
         alive_r = float(self.alive_bonus())
@@ -22,7 +20,7 @@ class Pendrogone_zero(Pendrogone):
 
         # -potential = distance to the objective
         shape_r = Pendrogone_zero.reward_shaping( -potential,
-                                                  np.linalg.norm(load_vel) )
+                                                  np.linalg.norm(self.state[4:6]) )
 
         reward = np.array([control_r, alive_r, pot_r, shape_r])
         done = alive_r < 0
@@ -61,25 +59,32 @@ class Pendrogone_zero(Pendrogone):
         #     (4 - min(4, max(v, 0.001)))/4 ** (1/max(0.1, d))
         # return lambda d : 3*max(1 - (d/4) ** 0.4, 0.0)
         return lambda d : np.exp(- np.abs(d*2))
-
+ 
     @property
     def obs(self):
-        x, z, phi, th, xdot, zdot, phidot, thdot = self.state  # th := theta
+        xl, zl, phi, th, xl_dot, zl_dot, phi_dot, th_dot = self.state
 
-        quad_angle = np.arctan2(
-            self.objective[1] + self.cable_length - self.state[1],
-            self.objective[0] - self.state[0]
-        )
+        # quad_angle = np.arctan2(
+        #     self.objective[1] + self.cable_length - self.state[1],
+        #     self.objective[0] - self.state[0]
+        # )
 
         # angle_2_target = quad_angle - phi
 
         obs = np.array([
-            x, z,
+            xl, zl,
             np.sin(th), np.cos(th),
             np.sin(phi), np.cos(phi),
-            xdot, zdot,
-            thdot, phidot,
-            self.load_pos[0], self.load_pos[1]
+            xl_dot, zl_dot,
+            th_dot, phi_dot,
         ])
 
         return obs
+
+    @property
+    def potential(self):
+        dist = np.linalg.norm([ self.state[0] - self.objective[0],
+                                self.state[1] - self.objective[1]] )
+
+        return - dist
+
