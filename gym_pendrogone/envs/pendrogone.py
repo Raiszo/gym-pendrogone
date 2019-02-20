@@ -90,8 +90,8 @@ class Pendrogone(gym.Env):
             zl_dot,
             phi_dot,
             th_dot,
-            (F*np.cos(phi - th) - self.q_mass*self.cable_length*th_dot*2) * np.sin(th) / self.Mass,
-            (F*np.cos(phi - th) - self.q_mass*self.cable_length*th_dot*2) * (-np.cos(th)) / self.Mass - self.gravity,
+            (-F*np.cos(phi - th) - self.q_mass*self.cable_length*th_dot*2) * np.sin(th) / self.Mass,
+            (-F*np.cos(phi - th) - self.q_mass*self.cable_length*th_dot*2) * (-np.cos(th)) / self.Mass - self.gravity,
             M / self.Ixx,
             F*np.sin(phi - th) / (self.q_mass * self.cable_length)
         ])
