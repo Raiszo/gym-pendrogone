@@ -35,18 +35,27 @@ class Pendrogone_zero(Pendrogone):
 
         return -150 if dead else +0.5
 
+    # @staticmethod
+    # def reward_shaping(dist, vel):
+    #     # print(dist, vel)
+    #     c = 5
+    #     dist_r = np.exp(- np.abs(3.5*dist)**2)
+    #     vel_r = np.power(np.exp(- np.abs(vel)), np.exp(- 2.5 * np.abs(dist)))
+    #     # vel_r = np.exp(- np.abs(vel))
+    #     # mask = (dist <= 0.2) * (vel > 1)
+    #     result = c * dist_r * vel_r
+
+    #     # return np.logical_not(mask) * result + mask * -3.0
+    #     return result
+
     @staticmethod
     def reward_shaping(dist, vel):
         # print(dist, vel)
         c = 5
         dist_r = np.exp(- np.abs(3.5*dist)**2)
-        vel_r = np.power(np.exp(- np.abs(vel)), np.exp(- 2.5 * np.abs(dist)))
-        # vel_r = np.exp(- np.abs(vel))
-        # mask = (dist <= 0.2) * (vel > 1)
-        result = c * dist_r * vel_r
 
-        # return np.logical_not(mask) * result + mask * -3.0
-        return result
+        return c * dist_r
+    
 
     @staticmethod
     def normal_dist(mu, sigma_2):
