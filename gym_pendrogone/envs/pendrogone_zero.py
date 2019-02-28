@@ -33,7 +33,7 @@ class Pendrogone_zero(Pendrogone):
             or np.absolute(self.state[0]) > Pendrogone.LIMITS[0] \
             or np.absolute(self.state[1]) > Pendrogone.LIMITS[1]
 
-        return -150 if dead else +0.5
+        return -200 if dead else +0.5
 
     # @staticmethod
     # def reward_shaping(dist, vel):
@@ -52,7 +52,7 @@ class Pendrogone_zero(Pendrogone):
     def reward_shaping(dist, vel):
         # print(dist, vel)
         c = 5
-        dist_r = np.exp(- np.abs(3.5*dist)**2)
+        dist_r = np.exp(- 2 * dist)
 
         return c * dist_r
     
