@@ -68,7 +68,7 @@ class Pendrogone(gym.Env):
         self.observation_space = spaces.Box(
             low = -high,
             high = high,
-            dtype=np.float32
+            dtype = np.float32
         )
 
         self.seed()
@@ -83,7 +83,7 @@ class Pendrogone(gym.Env):
         
         u1, u2 = clipped_u
         F = u1 + u2
-        M = (u2 - u1) * self.arm_length
+        M = (u1 - u2) * self.arm_length
 
         sdot = np.array([
             xl_dot,
@@ -118,7 +118,6 @@ class Pendrogone(gym.Env):
             pos_load[0],
             pos_load[1],
             phi,
-            # this angle is taken from the intertial z cordinate
             theta,
             0, 0, 0, 0
         ])
@@ -155,7 +154,7 @@ class Pendrogone(gym.Env):
         screen_width = 800
         screen_height = 800
 
-        xl,zl,phi,theta = self.state[0:4].tolist()
+        xl,zl,phi,theta = self.state[0:4]
         xq,zq = self.pos_quad
 
         t1_xy = Pendrogone.transform(self.pos_quad,

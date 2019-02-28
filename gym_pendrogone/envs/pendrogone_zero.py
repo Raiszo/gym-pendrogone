@@ -83,10 +83,10 @@ class Pendrogone_zero(Pendrogone):
 
         obs = np.array([
             xl, zl,
-            np.sin(th), np.cos(th),
             np.sin(phi), np.cos(phi),
+            np.sin(th), np.cos(th),
             xl_dot, zl_dot,
-            th_dot, phi_dot,
+            phi_dot, th_dot,
         ])
 
         return obs
