@@ -109,16 +109,14 @@ class Pendrogone(gym.Env):
         limit = Pendrogone.LIMITS - self.cable_length
 
         pos_load = 2*limit * np.random.rand(2) - limit
-        # phi = (np.random.rand(1) * 2 - 1) * self.q_maxAngle - 0.1
-        # theta = (np.random.rand(1) * 2 - 1) * self.l_maxAngle - 0.1
-        phi = 0.0
-        theta = 0.0
+        angle = (np.random.rand(1) * 2 - 1) * (np.array([ self.q_maxAngle, self.l_maxAngle ]) - 0.2)
+        # angle = [ 0.0, 0.0 ]
 
         self.state = np.array([
             pos_load[0],
             pos_load[1],
-            phi,
-            theta,
+            angle[0],
+            angle[1],
             0, 0, 0, 0
         ])
         self.objective = np.array([0.0, 0.0])
