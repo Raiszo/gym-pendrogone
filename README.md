@@ -18,6 +18,10 @@ If error with pyglet, something like: "invalid literal for int() with base 10: '
 
 # Log
 
+### 01-0302019
+- Totally forgot that position was the load's position, not the quadcopter's position. Fixing that a simple reward shaping function could get a good controller in 600 iterations. For better performance 1200 is OK :D
+- Next: Get another environment with multiple objective resets, like the one in the OpenAI PPO blog.
+
 ### 23-11-2018
 - Quite strange, the drone actually learns that a sufficient thrust will keep it floating, the pendrogone does not, always going for more negative thurst that will be clipped to 0. What an emo ;'v
 
