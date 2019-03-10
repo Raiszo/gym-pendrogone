@@ -2,10 +2,13 @@ import numpy as np
 from . import Pendrogone
 
 
-class Pendrogone_zero(Pendrogone):
+class Pendrogone_flagrun(Pendrogone):
     def __init__(self):
         super().__init__()
 
+    def flag_reposition(self, first=False):
+        self.objective = self.random_uniform(low=-self.LIMITS, high=self.LIMITS)
+            
     def step(self, action):
         # This first block of code should not change
         old_potential = self.potential
@@ -34,42 +37,6 @@ class Pendrogone_zero(Pendrogone):
             or np.absolute(self.state[1]) > Pendrogone.LIMITS[1]
 
         return -200 if dead else +0.5
-
-    # @staticmethod
-    # def reward_shaping(dist, vel):
-    #     # print(dist, vel)
-    #     c = 5
-    #     dist_r = np.exp(- np.abs(3.5*dist)**2)
-    #     vel_r = np.power(np.exp(- np.abs(vel)), np.exp(- 2.5 * np.abs(dist)))
-    #     # vel_r = np.exp(- np.abs(vel))
-    #     # mask = (dist <= 0.2) * (vel > 1)
-    #     result = c * dist_r * vel_r
-
-    #     # return np.logical_not(mask) * result + mask * -3.0
-    #     return result
-
-    @staticmethod
-    def reward_shaping(dist, vel):
-        # print(dist, vel)
-        c = 5
-        dist_r = np.exp(- 2 * dist)
-
-        return c * dist_r
-    
-
-    @staticmethod
-    def normal_dist(mu, sigma_2):
-        c = 1/np.sqrt(2*np.pi*sigma_2)
-
-        return lambda x: c * np.exp(- (x-mu)**2 / (2*sigma_2))
-
-    @staticmethod
-    def exponential():
-        # return lambda d, v : max(3 - (3*d) ** 0.4, 0.0) * \
-        #     (4 - min(4, max(v, 0.001)))/4 ** (1/max(0.1, d))
-        # return lambda d : 3*max(1 - (d/4) ** 0.4, 0.0)
-        return lambda d : np.exp(- np.abs(d*2))
- 
 
     @property
     def potential(self):

@@ -23,6 +23,7 @@ class Pendrogone(gym.Env):
         self.height = 0.02 # [m]
 
         # limits
+        self.limits = LIMITS
         self.q_maxAngle = np.pi / 2
 
         ## Load stuff
@@ -100,23 +101,32 @@ class Pendrogone(gym.Env):
 
         return clipped_u
 
+    def random_uniform(self, low, high):
+        assert high.shape == low.shape
+        
+        width = high - low
+        return width*np.random.rand(*high.shape) - width
+    
+    
     def reset(self):
         """
         Set a random objective position for the load
         sampling a position for the quadrotor and then
         calculating the load position
         """
-        limit = Pendrogone.LIMITS - self.cable_length
+        l_pos = Pendrogone.LIMITS - self.cable_length
+        pos_load = self.random_uniform(low=-l_pos, high=l_pos)
 
-        pos_load = 2*limit * np.random.rand(2) - limit
-        angle = (np.random.rand(1) * 2 - 1) * (np.array([ 0.1, 0.4 ]))
+        
+        l_angles = [ 0.1, 0.4 ]
+        angles = self.random_uniform(low=-l_angles, high=l_angles)
         # angle = [ 0.0, 0.0 ]
 
         self.state = np.array([
             pos_load[0],
             pos_load[1],
-            angle[0],
-            angle[1],
+            angles[0],
+            angles[1],
             0, 0, 0, 0
         ])
         self.objective = np.array([0.0, 0.0])
@@ -147,6 +157,20 @@ class Pendrogone(gym.Env):
         """
         return np.array([ np.sin(self.state[3]), -np.cos(self.state[3]) ])
 
+    @property
+    def obs(self):
+        xl, zl, phi, th, xl_dot, zl_dot, phi_dot, th_dot = self.state
+
+        obs = np.array([
+            xl, zl,
+            np.sin(phi), np.cos(phi),
+            np.sin(th), np.cos(th),
+            xl_dot, zl_dot,
+            phi_dot, th_dot,
+        ])
+
+        return obs
+    
     def render(self, mode='human'):
         from gym.envs.classic_control import rendering
         screen_width = 800
