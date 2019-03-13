@@ -12,3 +12,8 @@ register(
     timestep_limit=200
 )
 
+register(
+    id='PendrogoneFlagrun-v0',
+    entry_point='gym_pendrogone.envs:Pendrogone_flagrun',
+    timestep_limit=1200
+)

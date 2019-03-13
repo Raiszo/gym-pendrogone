@@ -27,14 +27,6 @@ class Pendrogone_zero(Pendrogone):
 
         return self.obs, reward, done, {}
 
-    def alive_bonus(self):
-        dead = np.absolute(self.state[2]) > self.q_maxAngle \
-            or np.absolute(self.state[3]) > self.l_maxAngle \
-            or np.absolute(self.state[0]) > Pendrogone.LIMITS[0] \
-            or np.absolute(self.state[1]) > Pendrogone.LIMITS[1]
-
-        return -200 if dead else +0.5
-
     # @staticmethod
     # def reward_shaping(dist, vel):
     #     # print(dist, vel)
@@ -69,12 +61,3 @@ class Pendrogone_zero(Pendrogone):
         #     (4 - min(4, max(v, 0.001)))/4 ** (1/max(0.1, d))
         # return lambda d : 3*max(1 - (d/4) ** 0.4, 0.0)
         return lambda d : np.exp(- np.abs(d*2))
- 
-
-    @property
-    def potential(self):
-        dist = np.linalg.norm([ self.state[0] - self.objective[0],
-                                self.state[1] - self.objective[1]] )
-
-        return - dist
-

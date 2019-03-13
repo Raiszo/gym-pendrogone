@@ -23,7 +23,7 @@ class Pendrogone(gym.Env):
         self.height = 0.02 # [m]
 
         # limits
-        self.limits = LIMITS
+        self.limits = Pendrogone.LIMITS
         self.q_maxAngle = np.pi / 2
 
         ## Load stuff
@@ -156,6 +156,21 @@ class Pendrogone(gym.Env):
         unit vector from quadrotor to the load
         """
         return np.array([ np.sin(self.state[3]), -np.cos(self.state[3]) ])
+
+    @property
+    def potential(self):
+        dist = np.linalg.norm([ self.state[0] - self.objective[0],
+                                self.state[1] - self.objective[1]] )
+
+        return - dist
+
+    def alive_bonus(self):
+        dead = np.absolute(self.state[2]) > self.q_maxAngle \
+            or np.absolute(self.state[3]) > self.l_maxAngle \
+            or np.absolute(self.state[0]) > Pendrogone.LIMITS[0] \
+            or np.absolute(self.state[1]) > Pendrogone.LIMITS[1]
+
+        return -200 if dead else +0.5
 
     @property
     def obs(self):
