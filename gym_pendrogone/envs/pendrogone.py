@@ -105,7 +105,7 @@ class Pendrogone(gym.Env):
         assert high.shape == low.shape
         
         width = high - low
-        return width*np.random.rand(*high.shape) - width
+        return width*np.random.rand(*high.shape) + low
     
     
     def reset(self):
@@ -114,11 +114,11 @@ class Pendrogone(gym.Env):
         sampling a position for the quadrotor and then
         calculating the load position
         """
-        l_pos = Pendrogone.LIMITS - self.cable_length
+        l_pos = self.limits - self.cable_length
         pos_load = self.random_uniform(low=-l_pos, high=l_pos)
 
         
-        l_angles = [ 0.1, 0.4 ]
+        l_angles = np.array([ 0.1, 0.4 ])
         angles = self.random_uniform(low=-l_angles, high=l_angles)
         # angle = [ 0.0, 0.0 ]
 
@@ -176,8 +176,10 @@ class Pendrogone(gym.Env):
     def obs(self):
         xl, zl, phi, th, xl_dot, zl_dot, phi_dot, th_dot = self.state
 
+        obj_x, obj_z = self.objective
+        
         obs = np.array([
-            xl, zl,
+            xl - obj_x, zl - obj_z,
             np.sin(phi), np.cos(phi),
             np.sin(th), np.cos(th),
             xl_dot, zl_dot,

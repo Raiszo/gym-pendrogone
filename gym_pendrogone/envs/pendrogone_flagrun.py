@@ -7,7 +7,8 @@ class Pendrogone_flagrun(Pendrogone):
         super().__init__()
 
     def flag_reposition(self):
-        self.objective = self.random_uniform(low=-self.LIMITS, high=self.LIMITS)
+        limits = self.limits - self.cable_length
+        self.objective = self.random_uniform(low=-limits, high=limits)
             
     def step(self, action):
         # This first block of code should not change
@@ -28,7 +29,7 @@ class Pendrogone_flagrun(Pendrogone):
         reward = np.array([control_r, alive_r, pot_r, shape_r])
         done = alive_r < 0
 
-        if self.potential < 0.5:
+        if -self.potential < 0.1:
             self.flag_reposition()
 
         return self.obs, reward, done, {}
