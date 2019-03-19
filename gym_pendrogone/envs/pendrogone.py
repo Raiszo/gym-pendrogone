@@ -131,6 +131,8 @@ class Pendrogone(gym.Env):
         ])
         self.objective = np.array([0.0, 0.0])
 
+        self.specific_reset()
+
         return self.obs
 
     def seed(self, seed=None):

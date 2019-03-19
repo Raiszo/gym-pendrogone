@@ -9,6 +9,7 @@ class Pendrogone_flagrun(Pendrogone):
     def flag_reposition(self):
         limits = self.limits - self.cable_length
         self.objective = self.random_uniform(low=-limits, high=limits)
+        self.flag_timeout = 200
             
     def step(self, action):
         # This first block of code should not change
@@ -29,11 +30,15 @@ class Pendrogone_flagrun(Pendrogone):
         reward = np.array([control_r, alive_r, pot_r, shape_r])
         done = alive_r < 0
 
-        if -self.potential < 0.1:
+        self.flag_timeout -= 1
+        if -self.potential < 0.1 or self.flag_timeout <= 0:
             self.flag_reposition()
 
         return self.obs, reward, done, {}
 
+    def specific_reset(self):
+        self.flag_timeout = 200
+    
     @staticmethod
     def reward_shaping(dist, vel):
         # print(dist, vel)

@@ -61,3 +61,6 @@ class Pendrogone_zero(Pendrogone):
         #     (4 - min(4, max(v, 0.001)))/4 ** (1/max(0.1, d))
         # return lambda d : 3*max(1 - (d/4) ** 0.4, 0.0)
         return lambda d : np.exp(- np.abs(d*2))
+
+    def specific_reset(self):
+        pass
