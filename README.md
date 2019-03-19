@@ -18,7 +18,10 @@ If error with pyglet, something like: "invalid literal for int() with base 10: '
 
 # Log
 
-### 01-0302019
+### 16-03-2019
+- If one defines another objective based only when the distance to it is less than a threshold, the agent will overfit, and never get to the objective to not reset it
+
+### 01-03-2019
 - Totally forgot that position was the load's position, not the quadcopter's position. Fixing that a simple reward shaping function could get a good controller in 600 iterations. For better performance 1200 is OK :D
 - Next: Get another environment with multiple objective resets, like the one in the OpenAI PPO blog.
 
